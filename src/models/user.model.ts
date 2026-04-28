@@ -19,7 +19,7 @@ const userSchema = new Schema<IUser>(
     lastName: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, select: false },
-    teamId: { type: Schema.Types.ObjectId, ref: 'Team', required: true, index: true },
+    teamId: { type: Schema.Types.ObjectId, ref: 'Team', index: true },
     role: { type: String, enum: ['owner', 'admin', 'member'], default: 'member' },
   },
   { timestamps: true },

@@ -45,23 +45,22 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
 
   const hashedPassword = await bcrypt.hash(input.password, 12);
 
-  const team = await Team.create({
-    name: input.teamName,
-    ownerId: null,
-    planId: freePlan._id,
-  });
-
   const user = await User.create({
     firstName: input.firstName,
     lastName: input.lastName,
     email: input.email,
     password: hashedPassword,
-    teamId: team._id,
     role: 'owner',
   });
 
-  team.ownerId = user._id;
-  await team.save();
+  const team = await Team.create({
+    name: input.teamName,
+    ownerId: user._id,
+    planId: freePlan._id,
+  });
+
+  user.teamId = team._id;
+  await user.save();
 
   const token = signToken({
     userId: user._id.toString(),

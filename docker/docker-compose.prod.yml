@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  api:
+    image: ${API_IMAGE:-ghcr.io/nathanpixodeo/ai-face-matching/api:latest}
+    ports:
+      - "4001:4001"
+    depends_on:
+      mongo:
+        condition: service_started
+      redis:
+        condition: service_started
+      ml-service:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - MONGO_URI=mongodb://mongo:27017/face-service
+      - REDIS_URL=redis://redis:6379
+      - ML_SERVICE_URL=http://ml-service:8000
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4001/api/health').then(r => r.ok ? process.exit(0) : process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  ml-service:
+    image: ${ML_IMAGE:-ghcr.io/nathanpixodeo/ai-face-matching/ml:latest}
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_DIR=/app/models
+      - ADAFACE_MODEL_NAME=ir_101
+      - DEEPFACE_DETECTOR=retinaface
+      - DEEPFACE_MODEL=Facenet512
+      - MATCH_THRESHOLD=0.4
+    volumes:
+      - ml-models:/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  uploads:
+  ml-models:
+  mongo-data:
+  redis-data:

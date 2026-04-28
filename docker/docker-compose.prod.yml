@@ -11,12 +11,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file: .env
-    environment:
-      - NODE_ENV=production
-      - PORT=4001
-      - MONGO_URI=mongodb://host.docker.internal:27017/face-service
-      - REDIS_URL=redis://host.docker.internal:6379
-      - ML_SERVICE_URL=http://ml-service:8000
     volumes:
       - uploads:/app/uploads
     restart: unless-stopped

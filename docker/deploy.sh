@@ -19,9 +19,25 @@ export ML_IMAGE="$REPO/ml:$TAG"
 if [ ! -f "$APP_DIR/.env" ]; then
   echo "==> WARNING: $APP_DIR/.env not found — creating template"
   cat > "$APP_DIR/.env" <<'ENVEOF'
+# Server
+NODE_ENV=production
+PORT=4001
+
+# Database (aaPanel host services)
+MONGO_URI=mongodb://host.docker.internal:27017/face-service
+REDIS_URL=redis://host.docker.internal:6379
+
+# ML Service (Docker internal)
+ML_SERVICE_URL=http://ml-service:8000
+
+# JWT (CHANGE THIS!)
 JWT_SECRET=CHANGE-ME-minimum-16-characters
 JWT_EXPIRES_IN=2h
+
+# CORS
 CORS_ORIGINS=*
+
+# Upload
 UPLOAD_DIR=/app/uploads
 MAX_FILE_SIZE_MB=50
 ENVEOF

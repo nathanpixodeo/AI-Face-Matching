@@ -4,7 +4,7 @@ python-multipart==0.0.20
 
 # ML - Face Detection + Embedding
 deepface==0.0.93
-retinaface==0.0.17
+retina-face>=0.0.14
 tf-keras>=2.16.0
 onnxruntime==1.20.1
 torch>=2.1.0

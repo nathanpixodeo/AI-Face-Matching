@@ -10,7 +10,6 @@ Model weights are downloaded on first use to the configured model_dir.
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Optional
 

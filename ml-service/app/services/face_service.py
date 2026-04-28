@@ -9,10 +9,9 @@ Embedding: try AdaFace first, fall back to DeepFace Facenet512.
 import logging
 from typing import Optional
 
-import cv2
 import numpy as np
 
-from app.models.schemas import BoundingBox, DetectedFace
+from app.models.schemas import DetectedFace
 from app.services.adaface_service import adaface_service
 from app.services.deepface_service import deepface_service
 from app.utils.image import (

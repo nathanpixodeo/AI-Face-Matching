@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
-from app.models.schemas import DetectResponse, BoundingBox
+from app.models.schemas import DetectResponse
 from app.services.face_service import face_service
 
 router = APIRouter(tags=["detection"])

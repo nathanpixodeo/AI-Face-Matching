@@ -1,0 +1,12 @@
+import fp from 'fastify-plugin';
+import multipart from '@fastify/multipart';
+import { env } from '../config/env';
+
+export default fp(async (app) => {
+  await app.register(multipart, {
+    limits: {
+      fileSize: env.MAX_FILE_SIZE_MB * 1024 * 1024,
+      files: 1000,
+    },
+  });
+});

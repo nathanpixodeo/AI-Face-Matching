@@ -1,0 +1,84 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "4001:4001"
+    depends_on:
+      mongo:
+        condition: service_started
+      redis:
+        condition: service_started
+      ml-service:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - MONGO_URI=mongodb://mongo:27017/face-service
+      - REDIS_URL=redis://redis:6379
+      - ML_SERVICE_URL=http://ml-service:8000
+      - JWT_SECRET=change-me-in-production-min-16
+      - JWT_EXPIRES_IN=2h
+      - CORS_ORIGINS=*
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE_MB=50
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4001/api/health').then(r => r.ok ? process.exit(0) : process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  ml-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ml
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_DIR=/app/models
+      - ADAFACE_MODEL_NAME=ir_101
+      - DEEPFACE_DETECTOR=retinaface
+      - DEEPFACE_MODEL=Facenet512
+      - MATCH_THRESHOLD=0.4
+    volumes:
+      - ml-models:/app/models
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  uploads:
+  ml-models:
+  mongo-data:
+  redis-data:

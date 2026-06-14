@@ -7,7 +7,7 @@ const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.bmp']);
 const ALLOWED_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/bmp']);
 
 export function getTeamUploadDir(teamId: string): string {
-  return path.join(env.UPLOAD_DIR, teamId);
+  return path.resolve(env.UPLOAD_DIR, teamId);
 }
 
 export async function ensureDir(dir: string): Promise<void> {
@@ -35,7 +35,7 @@ export async function saveFile(
   teamId: string,
   buffer: Buffer,
   originalName: string,
-): Promise<{ filePath: string; filename: string }> {
+): Promise<{ filePath: string; relativePath: string }> {
   const dir = getTeamUploadDir(teamId);
   await ensureDir(dir);
 
@@ -43,7 +43,10 @@ export async function saveFile(
   const filePath = path.join(dir, filename);
   await fs.writeFile(filePath, buffer);
 
-  return { filePath, filename };
+  return {
+    filePath,
+    relativePath: path.join(teamId, filename),
+  };
 }
 
 export async function deleteFile(filePath: string): Promise<void> {
@@ -52,4 +55,8 @@ export async function deleteFile(filePath: string): Promise<void> {
   } catch {
     // File may already be deleted
   }
+}
+
+export function getFileUrl(relativePath: string): string {
+  return `/api/uploads/file/${relativePath.replace(/\\/g, '/')}`;
 }

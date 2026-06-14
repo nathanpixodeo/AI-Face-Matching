@@ -1,47 +1,18 @@
 import { Face } from '../models/face.model';
 import { Identity } from '../models/identity.model';
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  if (normA === 0 || normB === 0) return 0;
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-function similarityToPercent(similarity: number): number {
-  return Math.round(Math.max(0, Math.min(100, similarity * 100)));
-}
-
-const MATCH_THRESHOLD = 0.4;
+import { Image } from '../models/image.model';
+import { cosineSimilarity, similarityToPercent, FACE_MATCH_THRESHOLD, getConfirmedFaceEmbeddings } from '../lib/similarity';
 
 export async function autoMapFaces(
   batchId: string,
   teamId: string,
 ): Promise<{ autoMapped: number; unmatched: number }> {
-  const confirmedFaces = await Face.find({
-    teamId,
-    identityId: { $ne: null },
-    mappingStatus: { $in: ['confirmed', 'manual'] },
-  }).select('embedding identityId');
+  const identityEmbeddings = await getConfirmedFaceEmbeddings(teamId);
 
-  const identityEmbeddings = new Map<string, number[][]>();
-  for (const face of confirmedFaces) {
-    const idStr = face.identityId!.toString();
-    if (!identityEmbeddings.has(idStr)) {
-      identityEmbeddings.set(idStr, []);
-    }
-    identityEmbeddings.get(idStr)!.push(face.embedding);
-  }
-
+  const imageIds = await getImageIdsForBatch(batchId);
   const newFaces = await Face.find({
     teamId,
-    imageId: { $in: await getImageIdsForBatch(batchId) },
+    imageId: { $in: imageIds },
     mappingStatus: 'unmatched',
   });
 
@@ -62,7 +33,7 @@ export async function autoMapFaces(
       }
     }
 
-    if (bestIdentityId && bestSimilarity >= MATCH_THRESHOLD) {
+    if (bestIdentityId && bestSimilarity >= FACE_MATCH_THRESHOLD) {
       await Face.findByIdAndUpdate(face._id, {
         identityId: bestIdentityId,
         mappingStatus: 'auto',
@@ -80,7 +51,6 @@ export async function autoMapFaces(
 }
 
 async function getImageIdsForBatch(batchId: string): Promise<string[]> {
-  const { Image } = await import('../models/image.model');
   const images = await Image.find({ uploadBatchId: batchId }).select('_id');
   return images.map((img) => img._id.toString());
 }

@@ -4,11 +4,11 @@ const ML_URL = env.ML_SERVICE_URL;
 const TIMEOUT = 30000;
 
 interface MlDetectResponse {
+  faces_count: number;
   faces: Array<{
     bbox: { x1: number; y1: number; x2: number; y2: number };
     confidence: number;
   }>;
-  count: number;
 }
 
 interface MlEmbedFace {
@@ -18,8 +18,9 @@ interface MlEmbedFace {
 }
 
 interface MlEmbedResponse {
-  faces: MlEmbedFace[];
-  count: number;
+  faces_count: number;
+  embeddings: number[][];
+  model_used: string;
 }
 
 interface MlAnalyzeFace {
@@ -33,14 +34,15 @@ interface MlAnalyzeFace {
 }
 
 interface MlAnalyzeResponse {
+  faces_count: number;
   faces: MlAnalyzeFace[];
-  count: number;
+  model_used: string;
 }
 
 interface MlBatchEmbedItem {
-  filename: string;
+  index: number;
+  faces_count: number;
   faces: MlEmbedFace[];
-  count: number;
   error: string | null;
 }
 
@@ -114,7 +116,7 @@ export async function batchEmbed(
     formData.append('files', blob, img.filename);
   }
 
-  const result = await mlFetch<{ results: MlBatchEmbedItem[] }>('/batch-embed', {
+  const result = await mlFetch<{ total: number; processed: number; failed: number; results: MlBatchEmbedItem[] }>('/batch-embed', {
     method: 'POST',
     body: formData,
   });

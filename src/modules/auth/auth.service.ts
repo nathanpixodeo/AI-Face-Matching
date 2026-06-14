@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import { env } from '../../config/env';
 import { User, IUser } from '../../models/user.model';
 import { Team } from '../../models/team.model';
@@ -45,22 +46,27 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
 
   const hashedPassword = await bcrypt.hash(input.password, 12);
 
+  // Pre-generate IDs and create team first to avoid race condition
+  // where user exists without a teamId
+  const userId = new mongoose.Types.ObjectId();
+  const teamId = new mongoose.Types.ObjectId();
+
+  const team = await Team.create({
+    _id: teamId,
+    name: input.teamName,
+    ownerId: userId,
+    planId: freePlan._id,
+  });
+
   const user = await User.create({
+    _id: userId,
     firstName: input.firstName,
     lastName: input.lastName,
     email: input.email,
     password: hashedPassword,
     role: 'owner',
+    teamId: team._id,
   });
-
-  const team = await Team.create({
-    name: input.teamName,
-    ownerId: user._id,
-    planId: freePlan._id,
-  });
-
-  user.teamId = team._id;
-  await user.save();
 
   const token = signToken({
     userId: user._id.toString(),

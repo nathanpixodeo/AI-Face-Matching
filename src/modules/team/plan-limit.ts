@@ -11,14 +11,14 @@ type LimitKey =
   | 'maxTeamMembers'
   | 'maxFilesPerUpload';
 
-const usageMap: Record<LimitKey, string> = {
+type UsageField = 'identitiesCount' | 'imagesCount' | 'matchesToday' | 'apiCallsToday' | 'storageUsedMB';
+
+const usageMap: Partial<Record<LimitKey, UsageField>> = {
   maxIdentities: 'identitiesCount',
   maxImages: 'imagesCount',
   maxMatchesPerDay: 'matchesToday',
   maxApiCallsPerDay: 'apiCallsToday',
   maxStorageMB: 'storageUsedMB',
-  maxTeamMembers: 'members',
-  maxFilesPerUpload: 'filesPerUpload',
 };
 
 const labelMap: Record<LimitKey, string> = {
@@ -49,7 +49,8 @@ export async function checkPlanLimit(
   if (currentCount !== undefined) {
     usage = currentCount;
   } else {
-    const usageField = usageMap[limitKey] as keyof typeof team.usage;
+    const usageField = usageMap[limitKey];
+    if (!usageField) return;
     usage = (team.usage[usageField] as number) ?? 0;
   }
 
@@ -60,20 +61,22 @@ export async function checkPlanLimit(
 
 export async function incrementUsage(
   teamId: string,
-  field: keyof typeof usageMap,
+  field: LimitKey,
   amount = 1,
 ): Promise<void> {
-  const usageField = `usage.${usageMap[field]}`;
-  await Team.findByIdAndUpdate(teamId, { $inc: { [usageField]: amount } });
+  const usageField = usageMap[field];
+  if (!usageField) return;
+  await Team.findByIdAndUpdate(teamId, { $inc: { [`usage.${usageField}`]: amount } });
 }
 
 export async function decrementUsage(
   teamId: string,
-  field: keyof typeof usageMap,
+  field: LimitKey,
   amount = 1,
 ): Promise<void> {
-  const usageField = `usage.${usageMap[field]}`;
-  await Team.findByIdAndUpdate(teamId, { $inc: { [usageField]: -amount } });
+  const usageField = usageMap[field];
+  if (!usageField) return;
+  await Team.findByIdAndUpdate(teamId, { $inc: { [`usage.${usageField}`]: -amount } });
 }
 
 export async function resetDailyUsage(): Promise<void> {

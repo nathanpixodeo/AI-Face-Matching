@@ -54,15 +54,15 @@ async function processBatch(job: Job<DetectBatchData>) {
         await Face.insertMany(faceDocs);
       }
 
-      totalFaces += result.count;
+      totalFaces += result.faces_count;
 
       await Image.findByIdAndUpdate(image._id, {
         status: 'processed',
-        facesDetected: result.count,
+        facesDetected: result.faces_count,
       });
 
       await UploadBatch.findByIdAndUpdate(batchId, {
-        $inc: { processedImages: 1, totalFacesDetected: result.count },
+        $inc: { processedImages: 1, totalFacesDetected: result.faces_count },
       });
 
       await job.updateProgress(Math.round(((i + 1) / images.length) * 100));

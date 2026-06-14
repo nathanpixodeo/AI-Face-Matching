@@ -62,12 +62,13 @@ export async function progressHandler(
   const interval = setInterval(async () => {
     try {
       const progress = await uploadService.getBatchProgress(user.teamId, batchId);
-      reply.raw.write(`data: ${JSON.stringify(progress)}\n\n`);
 
       if (progress.status === 'review' || progress.status === 'completed' || progress.status === 'failed') {
         reply.raw.write(`event: done\ndata: ${JSON.stringify(progress)}\n\n`);
         clearInterval(interval);
         reply.raw.end();
+      } else {
+        reply.raw.write(`data: ${JSON.stringify(progress)}\n\n`);
       }
     } catch {
       clearInterval(interval);

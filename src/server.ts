@@ -1,4 +1,6 @@
 import Fastify, { FastifyError, FastifyInstance } from 'fastify';
+import { ZodError } from 'zod';
+import mongoose from 'mongoose';
 import { env } from './config/env';
 import { AppError } from './lib/errors';
 
@@ -48,7 +50,27 @@ export async function buildServer(): Promise<FastifyInstance> {
     return { status: 'ok', timestamp: new Date().toISOString() };
   });
 
-  app.setErrorHandler((error: FastifyError | AppError, request, reply) => {
+  app.setErrorHandler((error: FastifyError | AppError | ZodError | mongoose.Error.CastError, request, reply) => {
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        success: false,
+        data: null,
+        message: 'Validation error',
+        details: error.errors.map((e) => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+    }
+
+    if (error instanceof mongoose.Error.CastError) {
+      return reply.status(400).send({
+        success: false,
+        data: null,
+        message: `Invalid ${error.path}: ${error.value}`,
+      });
+    }
+
     const statusCode = 'statusCode' in error ? (error.statusCode ?? 500) : 500;
     const message = statusCode >= 500 ? 'Internal server error' : error.message;
 

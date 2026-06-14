@@ -7,22 +7,8 @@ import { NotFoundError } from '../../lib/errors';
 import { checkPlanLimit, incrementUsage } from '../team/plan-limit';
 import * as mlClient from '../../lib/ml-client';
 import { deleteFile } from '../../lib/file-storage';
+import { cosineSimilarity, FACE_MATCH_THRESHOLD } from '../../lib/similarity';
 import { ListFacesQuery, ListImagesQuery } from './face.schema';
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  if (normA === 0 || normB === 0) return 0;
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-const MATCH_THRESHOLD = 0.4;
 
 export async function matchFace(teamId: string, file: MultipartFile) {
   await checkPlanLimit(teamId, 'maxMatchesPerDay');
@@ -30,7 +16,7 @@ export async function matchFace(teamId: string, file: MultipartFile) {
   const buffer = await file.toBuffer();
   const embedResult = await mlClient.analyze(buffer);
 
-  if (embedResult.count === 0) {
+  if (embedResult.faces_count === 0) {
     return { query: null, matches: [] };
   }
 
@@ -55,7 +41,7 @@ export async function matchFace(teamId: string, file: MultipartFile) {
   }
 
   const matchEntries = [...identityScores.entries()]
-    .filter(([, sim]) => sim >= MATCH_THRESHOLD)
+    .filter(([, sim]) => sim >= FACE_MATCH_THRESHOLD)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
 

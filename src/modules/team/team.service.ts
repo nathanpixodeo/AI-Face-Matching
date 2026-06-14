@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { Team } from '../../models/team.model';
 import { User } from '../../models/user.model';
 import { Plan } from '../../models/plan.model';
@@ -52,17 +54,21 @@ export async function addMember(teamId: string, input: AddMemberInput) {
 
   const existing = await User.findOne({ email: input.email });
   if (existing) {
-    if (existing.teamId.toString() === teamId) {
+    if (existing.teamId && existing.teamId.toString() === teamId) {
       throw new ConflictError('User is already a member of this team');
     }
     throw new ConflictError('User is already a member of another team');
   }
 
+  const tempPassword = crypto.randomBytes(24).toString('hex');
+  const hashedPassword = await bcrypt.hash(tempPassword, 12);
+  const nameFromEmail = input.email.split('@')[0] || 'Invited';
+
   const user = await User.create({
-    firstName: '',
+    firstName: nameFromEmail,
     lastName: '',
     email: input.email,
-    password: 'pending-invite',
+    password: hashedPassword,
     teamId,
     role: input.role,
   });

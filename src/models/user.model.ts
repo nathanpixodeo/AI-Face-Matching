@@ -9,6 +9,8 @@ export interface IUser extends Document {
   password: string;
   teamId: Types.ObjectId;
   role: UserRole;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +23,8 @@ const userSchema = new Schema<IUser>(
     password: { type: String, required: true, select: false },
     teamId: { type: Schema.Types.ObjectId, ref: 'Team', index: true },
     role: { type: String, enum: ['owner', 'admin', 'member'], default: 'member' },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true },
 );

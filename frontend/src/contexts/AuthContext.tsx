@@ -1,6 +1,16 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useMemo, useEffect, type ReactNode } from 'react'
 import { api } from '../lib/api'
 import type { User } from '../types'
+
+function parseToken(token: string): User | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    if (payload.exp * 1000 < Date.now()) return null
+    return { _id: payload.user_id || payload.sub, email: payload.email, first_name: payload.first_name || '', last_name: payload.last_name || '', role: payload.role || 'member' }
+  } catch {
+    return null
+  }
+}
 
 interface AuthState {
   user: User | null
@@ -14,42 +24,37 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
+  const [token, setToken] = useState<string | null>(() => {
+    const t = localStorage.getItem('token')
+    return t && parseToken(t) ? t : null
+  })
   const [loading, setLoading] = useState(true)
 
+  const user = useMemo(() => (token ? parseToken(token) : null), [token])
+
   useEffect(() => {
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        if (payload.exp * 1000 < Date.now()) {
-          logout()
-          return
-        }
-        setUser({ _id: payload.user_id || payload.sub, email: payload.email, first_name: payload.first_name || '', last_name: payload.last_name || '', role: payload.role || 'member' })
-      } catch { logout() }
+    if (token !== null) {
+      localStorage.setItem('token', token)
+    } else {
+      localStorage.removeItem('token')
     }
-    setLoading(false)
   }, [token])
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setLoading(false) }, [])
 
   function logout() {
     setToken(null)
-    setUser(null)
-    localStorage.removeItem('token')
   }
 
   async function login(email: string, password: string) {
     const res = await api.auth.login({ email, password })
-    localStorage.setItem('token', res.token)
     setToken(res.token)
-    setUser(res.user)
   }
 
   async function register(data: { first_name: string; last_name: string; email: string; password: string; team_name: string }) {
     const res = await api.auth.register(data)
-    localStorage.setItem('token', res.token)
     setToken(res.token)
-    setUser(res.user)
   }
 
   return (

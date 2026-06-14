@@ -8,6 +8,16 @@ import { CardSkeleton, TableSkeleton } from '../components/ui/Skeleton'
 import { Users, Image, Scan, Search, Upload, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
+function ErrorBox({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
+      <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+      <p className="text-sm text-red-600 flex-1">Failed to load data</p>
+      <Button variant="ghost" size="sm" onClick={onRetry}><RefreshCw className="w-4 h-4 mr-1" />Retry</Button>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
 
@@ -32,16 +42,6 @@ export default function Dashboard() {
     { icon: Scan, label: 'Faces', value: stats?.totalFaces ?? 0, color: 'text-accent-500', bg: 'bg-orange-50' },
     { icon: Search, label: 'Matches Today', value: stats?.matchesToday ?? 0, color: 'text-purple-600', bg: 'bg-purple-50' },
   ]
-
-  function ErrorBox({ onRetry }: { onRetry: () => void }) {
-    return (
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
-        <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-        <p className="text-sm text-red-600 flex-1">Failed to load data</p>
-        <Button variant="ghost" size="sm" onClick={onRetry}><RefreshCw className="w-4 h-4 mr-1" />Retry</Button>
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">

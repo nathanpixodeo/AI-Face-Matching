@@ -8,12 +8,13 @@ import { Modal } from '../components/ui/Modal'
 import { Badge } from '../components/ui/Badge'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { Plus, Power, PowerOff, Edit3, Trash2 } from 'lucide-react'
+import type { Workspace } from '../types'
 
 export default function Workspaces() {
   const qc = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
-  const [editItem, setEditItem] = useState<any>(null)
+  const [editItem, setEditItem] = useState<Workspace | null>(null)
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -28,12 +29,12 @@ export default function Workspaces() {
   })
 
   const update = useMutation({
-    mutationFn: () => api.workspaces.update(editItem._id, { name, notes: notes || undefined }),
+    mutationFn: () => api.workspaces.update(editItem!._id, { name, notes: notes || undefined }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['workspaces'] }); setEditOpen(false) },
   })
 
   const toggle = useMutation({
-    mutationFn: (ws: any) => api.workspaces.update(ws._id, { status: ws.status === 'active' ? 'inactive' : 'active' }),
+    mutationFn: (ws: Workspace) => api.workspaces.update(ws._id, { status: ws.status === 'active' ? 'inactive' : 'active' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['workspaces'] }),
   })
 
@@ -42,7 +43,7 @@ export default function Workspaces() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['workspaces'] }),
   })
 
-  function openEdit(ws: any) {
+  function openEdit(ws: Workspace) {
     setEditItem(ws)
     setName(ws.name)
     setNotes(ws.notes || '')

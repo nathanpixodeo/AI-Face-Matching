@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { registerHandler, loginHandler } from './auth.controller';
+import { registerHandler, loginHandler, forgotPasswordHandler, resetPasswordHandler } from './auth.controller';
 
 export default async function authRoutes(app: FastifyInstance) {
   app.post('/api/auth/register', {
@@ -35,5 +35,36 @@ export default async function authRoutes(app: FastifyInstance) {
       },
     },
     handler: loginHandler,
+  });
+
+  app.post('/api/auth/forgot-password', {
+    schema: {
+      tags: ['Auth'],
+      summary: 'Request password reset token',
+      body: {
+        type: 'object',
+        required: ['email'],
+        properties: {
+          email: { type: 'string', format: 'email' },
+        },
+      },
+    },
+    handler: forgotPasswordHandler,
+  });
+
+  app.post('/api/auth/reset-password', {
+    schema: {
+      tags: ['Auth'],
+      summary: 'Reset password using token',
+      body: {
+        type: 'object',
+        required: ['token', 'password'],
+        properties: {
+          token: { type: 'string' },
+          password: { type: 'string', minLength: 8 },
+        },
+      },
+    },
+    handler: resetPasswordHandler,
   });
 }

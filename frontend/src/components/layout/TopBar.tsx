@@ -28,7 +28,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
       <div className="flex-1" />
 
       <div ref={ref} className="relative">
-        <button onClick={() => setOpen(!open)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+        <button data-testid="user-menu" onClick={() => setOpen(!open)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
           <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-medium">
             {user?.first_name?.[0]}{user?.last_name?.[0]}
           </div>

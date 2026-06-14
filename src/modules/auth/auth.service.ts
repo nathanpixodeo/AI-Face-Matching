@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
@@ -7,7 +8,7 @@ import { Team } from '../../models/team.model';
 import { Plan } from '../../models/plan.model';
 import { ConflictError, UnauthorizedError } from '../../lib/errors';
 import { JwtPayload } from '../../types';
-import { RegisterInput, LoginInput } from './auth.schema';
+import { RegisterInput, LoginInput, ForgotPasswordInput, ResetPasswordInput } from './auth.schema';
 
 function signToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
   const options: jwt.SignOptions = {
@@ -132,4 +133,38 @@ export async function login(input: LoginInput): Promise<AuthResult> {
       plan: plan?.name ?? 'free',
     },
   };
+}
+
+export async function forgotPassword(input: ForgotPasswordInput): Promise<{ token: string; message: string }> {
+  const user = await User.findOne({ email: input.email });
+  if (!user) {
+    return { token: '', message: 'If that email is registered, a reset link has been sent.' };
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  user.resetPasswordToken = hashedToken;
+  user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  await user.save();
+
+  return { token: resetToken, message: 'If that email is registered, a reset link has been sent.' };
+}
+
+export async function resetPassword(input: ResetPasswordInput): Promise<void> {
+  const hashedToken = crypto.createHash('sha256').update(input.token).digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: new Date() },
+  });
+
+  if (!user) {
+    throw new UnauthorizedError('Invalid or expired reset token');
+  }
+
+  user.password = await bcrypt.hash(input.password, 12);
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
 }

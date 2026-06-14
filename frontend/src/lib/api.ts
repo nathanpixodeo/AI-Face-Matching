@@ -1,4 +1,17 @@
-import type { ApiResponse, Stats, Identity, Face, Image, UploadBatch, MatchResult, Workspace, Team } from '../types'
+import type { ApiResponse, Stats, Identity, Face, Image, UploadBatch, MatchResult, Workspace, Team, Member } from '../types'
+
+interface AuthUser {
+  _id: string
+  email: string
+  first_name: string
+  last_name: string
+  role: string
+}
+
+interface AuthResult {
+  user: AuthUser
+  token: string
+}
 
 const BASE = '/api'
 
@@ -17,18 +30,22 @@ async function request<T>(url: string, opts?: RequestInit): Promise<T> {
 export const api = {
   auth: {
     login: (data: { email: string; password: string }) =>
-      request<{ user: any; token: string }>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+      request<AuthResult>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
     register: (data: { first_name: string; last_name: string; email: string; password: string; team_name: string }) =>
-      request<{ user: any; token: string }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+      request<AuthResult>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    forgotPassword: (email: string) =>
+      request<{ token: string }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+    resetPassword: (token: string, password: string) =>
+      request<null>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
   },
   team: {
     get: () => request<Team>('/team'),
     update: (data: Partial<Team>) => request<Team>('/team', { method: 'PUT', body: JSON.stringify(data) }),
     members: {
-      list: () => request<any[]>('/team/members'),
-      add: (data: { email: string; role: string }) => request<any>('/team/members', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, role: string) => request<any>(`/team/members/${id}`, { method: 'PUT', body: JSON.stringify({ role }) }),
-      remove: (id: string) => request<any>(`/team/members/${id}`, { method: 'DELETE' }),
+      list: () => request<Member[]>('/team/members'),
+      add: (data: { email: string; role: string }) => request<Member>('/team/members', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id: string, role: string) => request<Member>(`/team/members/${id}`, { method: 'PUT', body: JSON.stringify({ role }) }),
+      remove: (id: string) => request<void>(`/team/members/${id}`, { method: 'DELETE' }),
     },
     plan: (plan: string) => request<Team>('/team/plan', { method: 'PUT', body: JSON.stringify({ plan }) }),
   },
@@ -60,7 +77,7 @@ export const api = {
     },
     batch: (id: string) => request<UploadBatch>(`/uploads/batches/${id}`),
     review: (id: string) => request<UploadBatch>(`/uploads/batches/${id}/review`),
-    submitReview: (id: string, data: any) =>
+    submitReview: (id: string, data: Record<string, unknown>) =>
       request<UploadBatch>(`/uploads/batches/${id}/review`, { method: 'PUT', body: JSON.stringify(data) }),
     progress: (id: string) => request<UploadBatch>(`/uploads/batches/${id}/progress`),
     sseUrl: (id: string) => `${BASE}/uploads/batches/${id}/progress`,

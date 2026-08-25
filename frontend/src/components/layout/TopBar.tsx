@@ -13,7 +13,6 @@ const pageLabels: Record<string, string> = {
   '/images': 'Image library',
   '/workspaces': 'Workspaces',
   '/settings': 'Settings',
-  '/superadmin': 'Platform control',
 }
 
 export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {

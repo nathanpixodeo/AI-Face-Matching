@@ -27,6 +27,8 @@ const workspaceItems = [
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
+const adminAppUrl = import.meta.env.VITE_ADMIN_APP_URL ?? 'http://localhost:5176'
+
 function Wordmark({ compact, t }: { compact: boolean; t: (key: string) => string }) {
   return (
     <div className="flex items-center gap-3 overflow-hidden">
@@ -101,18 +103,18 @@ export function AppLayout() {
             {!collapsed && <p className="mt-9 border-b border-[#edf2f7] pb-2 text-sm font-medium text-[#4a5568]">{t('Platform')}</p>}
             <ul className="pt-3">
               <li>
-                <NavLink
-                  to="/superadmin"
+                <a
+                  href={adminAppUrl}
                   onClick={() => setMobileOpen(false)}
                   title={collapsed ? t('Platform') : undefined}
-                  className={({ isActive }) => clsx(
-                    'group relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-medium transition-all duration-200',
-                    isActive ? 'bg-[#f1fff5] text-[#1a202c]' : 'text-[#718096] hover:bg-[#f7fafc] hover:text-[#1a202c]',
+                  className={clsx(
+                    'group relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-medium text-[#718096] transition-all duration-200 hover:bg-[#f7fafc] hover:text-[#1a202c]',
                     collapsed && 'justify-center px-0',
                   )}
                 >
-                  {({ isActive }) => <><ShieldCheck className={clsx('h-[19px] w-[19px] shrink-0', isActive ? 'text-primary-500' : 'text-[#718096]')} />{!collapsed && <span>{t('Platform control')}</span>}{isActive && !collapsed && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-500" />}</>}
-                </NavLink>
+                  <ShieldCheck className="h-[19px] w-[19px] shrink-0 text-[#718096] group-hover:text-[#1a202c]" />
+                  {!collapsed && <span>{t('Platform control')}</span>}
+                </a>
               </li>
             </ul>
           </>}

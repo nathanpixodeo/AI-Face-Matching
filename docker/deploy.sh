@@ -15,6 +15,7 @@ echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_USER" --password-stdin
 
 export API_IMAGE="$REPO/api:$TAG"
 export ML_IMAGE="$REPO/ml:$TAG"
+export ADMIN_FRONTEND_IMAGE="$REPO/admin-frontend:$TAG"
 
 if [ ! -f "$APP_DIR/.env" ]; then
   echo "==> WARNING: $APP_DIR/.env not found — creating template"
@@ -45,7 +46,7 @@ ENVEOF
 fi
 
 echo "==> Pulling images..."
-docker compose -f "$COMPOSE_FILE" pull api ml-service
+docker compose -f "$COMPOSE_FILE" pull api ml-service admin-frontend
 
 echo "==> Starting services..."
 docker compose -f "$COMPOSE_FILE" up -d --remove-orphans

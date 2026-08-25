@@ -1,26 +1,22 @@
 # AI Face Matching
 
-Face recognition API with AdaFace ML, team-based multi-tenancy, identity management, and a production-grade React SPA.
+Face recognition API with AdaFace ML, team-based multi-tenancy, identity management, a customer React SPA, and an independently deployed platform-admin React app.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    React SPA (Vite 8)                        │
-│  TypeScript 6 · Tailwind 4 · TanStack Query 5               │
-│  React Router 7 · Lucide Icons                              │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  AuthProvider · ToastProvider · QueryClientProvider    │  │
-│  │  Routes: 14 pages (lazy-loaded)                       │  │
-│  └──────────────────────┬────────────────────────────────┘  │
-└─────────────────────────┼───────────────────────────────────┘
-                          │ REST (JWT Bearer)
+│ app.example.com              admin.example.com               │
+│ Customer React SPA           Admin React/Vite SPA             │
+│ Team-scoped workspace        Separate build + auth storage    │
+└─────────────────────────┬─────────────────┬─────────────────┘
+                          │ REST (JWT Bearer)│
 ┌─────────────────────────┼───────────────────────────────────┐
 │              Node.js API (Fastify 5 / TS)                   │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │  Auth/JWT · Teams/Plans · Identities                  │   │
 │  │  Upload · BullMQ Jobs · Face Match · Images           │   │
-│  │  Workspaces · Password Reset                          │   │
+│  │  Workspaces · Password Reset · Platform guards        │   │
 │  └──────────┬───────────────────────────────┬────────────┘   │
 │             │                               │                │
 │        ┌────┴────┐                    ┌────┴────┐           │
@@ -36,7 +32,7 @@ Face recognition API with AdaFace ML, team-based multi-tenancy, identity managem
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**5 Docker services:** Frontend (nginx), API (Node), ML (Python), MongoDB, Redis
+The customer and admin apps are separate deployment units. The admin container serves `admin.example.com` and reverse-proxies `/api` to the Node API; customer and admin JWT storage is never shared.
 
 ## Tech Stack
 
@@ -69,7 +65,7 @@ docker compose up -d
 ```
 
 Services:
-- Frontend: http://localhost:3000
+- Admin frontend: http://localhost:3001
 - API: http://localhost:4001
 - Swagger Docs: http://localhost:4001/docs
 - ML Service: http://localhost:8000
@@ -90,6 +86,11 @@ npm run dev                    # http://localhost:4001
 cd frontend
 npm install
 npm run dev                    # http://localhost:5173
+
+# Platform admin (separate terminal)
+cd ../admin-frontend
+npm install
+npm run dev                    # http://localhost:5176
 
 # Python ML Service (separate terminal)
 cd ml-service
@@ -115,18 +116,19 @@ Full interactive docs at `/docs` (Swagger UI).
 
 ## Localization
 
-FaceMatch currently supports English (`en`), Vietnamese (`vi`), and French (`fr`) across the React application and Fastify API.
+FaceMatch currently supports English (`en`), Vietnamese (`vi`), and French (`fr`) across both React applications and the Fastify API.
 
 - The frontend language switcher persists the choice in `facematch.locale`, updates the document language, and sends `Accept-Language` plus `X-Locale` with every API request.
 - The API prefers `X-Locale`, then negotiates `Accept-Language`, falls back to English, and returns `Content-Language` on every response.
 - API success, known domain errors, and validation messages use the request locale without changing response data contracts.
-- The selector uses inline SVG flags for English (United Kingdom), Vietnamese, and French choices; it requires no image asset service or third-party flag package.
+- Both selectors use inline SVG flags for English (United Kingdom), Vietnamese, and French choices; no image asset service or third-party flag package is required.
 
 ### Add another locale
 
 1. Add the locale code and display name to `frontend/src/i18n/locale.tsx`.
 2. Add its frontend catalog and optional inline flag in `frontend/src/components/ui/LocaleFlag.tsx`.
 3. Add the matching typed API catalog in `src/i18n/messages.ts`.
+4. Add the small admin catalog in `admin-frontend/src/i18n.tsx` and its SVG flag in `admin-frontend/src/components/LocaleFlag.tsx`.
 
 No route, controller, or API-client rewrite is required for a new language.
 
@@ -148,7 +150,6 @@ No route, controller, or API-client rewrite is required for a new language.
 | `/images/:id` | Image Detail | Yes | Viewer + bbox face overlays |
 | `/workspaces` | Workspaces | Yes | Workspace CRUD |
 | `/settings` | Settings | Yes | Tabs: General, Members, Plan |
-| `/superadmin` | Superadmin | Superadmin | Platform overview, team plans/status, and user status |
 
 ## Business Flow
 
@@ -197,6 +198,25 @@ npm run grant-superadmin -- admin@example.com
 
 The command updates only the existing account's `isSuperadmin` flag. It does not change the user's team role. Sign out and sign in again after the command so the new JWT includes platform access.
 
+## Admin Subdomain
+
+Platform administration is a standalone Vite application, not a client-app route.
+
+```
+https://app.example.com       → customer frontend
+https://admin.example.com     → admin frontend (:3001 on the host)
+                                  └─ /api/* → API container (:4001 internally)
+```
+
+- Build and deploy `admin-frontend` independently; its production Docker image is `ghcr.io/<owner>/<repo>/admin-frontend`.
+- Set `VITE_ADMIN_APP_URL=https://admin.example.com` in the customer frontend build. The customer sidebar opens that URL only for users whose session reports `isSuperadmin`.
+- The admin app has a separate login and local-storage namespace. It calls `POST /api/auth/login` and `/api/platform/*` only.
+- The server remains the authorization boundary: every platform endpoint requires `authenticate` and `requireSuperadmin`, even if a token is injected manually.
+- Use [docker/nginx/admin.example.com.conf](docker/nginx/admin.example.com.conf) as the public Nginx virtual-host template. Add your TLS certificate in the host’s HTTPS virtual host; do not expose container port `3001` publicly.
+- When an admin app calls the API directly instead of through its supplied same-origin Nginx proxy, include `https://admin.example.com` in `CORS_ORIGINS`.
+
+The tag deployment workflow publishes the admin image, deploys it on loopback port `3001`, and pulls it along with the API/ML images. Install the public Nginx template once on the host and point `admin.example.com` DNS to that host.
+
 ### Frontend
 ```bash
 npm run dev          # Vite dev server (:5173, proxies /api → :4001)
@@ -205,6 +225,15 @@ npm run preview      # Preview production build
 npm run lint         # ESLint check
 npm run typecheck    # TypeScript type check (tsc -b)
 npm run test:e2e     # Playwright E2E tests (auth + upload flows)
+```
+
+### Admin Frontend
+```bash
+cd admin-frontend
+npm run dev          # Vite dev server (:5176, proxies /api → :4001)
+npm run build        # tsc -b + vite build → dist/
+npm run lint         # ESLint check
+npm run typecheck    # TypeScript type check
 ```
 
 ## Project Structure
@@ -232,6 +261,11 @@ ai-face-matching/
 │   ├── e2e/                # Playwright E2E tests
 │   └── playwright.config.ts
 │
+├── admin-frontend/         # Separate React/Vite platform administrator app
+│   ├── src/auth/           # Isolated administrator session state
+│   ├── src/pages/          # Login + platform overview/team/user controls
+│   └── src/lib/api.ts      # Only auth + platform API client
+│
 ├── ml-service/             # Python FastAPI ML microservice
 ├── docker/                 # Dockerfiles + docker-compose (5 services)
 ├── docs/                   # System documentation, FE spec, architecture
@@ -250,7 +284,7 @@ See [.env.example](.env.example) for all variables.
 | `ML_SERVICE_URL` | No | `http://localhost:8000` | Python ML service URL |
 | `PORT` | No | `4001` | API server port |
 | `JWT_EXPIRES_IN` | No | `2h` | Token expiry duration |
-| `CORS_ORIGINS` | No | `*` | Comma-separated allowed origins |
+| `CORS_ORIGINS` | No | `*` | Comma-separated allowed origins (include both app/admin origins for direct API calls) |
 | `UPLOAD_DIR` | No | `uploads` | File storage directory |
 | `MAX_FILE_SIZE_MB` | No | `50` | Max upload file size |
 
@@ -264,6 +298,8 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 | `backend-test` | Jest (38 tests) | ✓ |
 | `frontend-lint-typecheck` | ESLint + tsc -b | ✓ |
 | `frontend-build` | Vite build | ✓ |
+| `admin-frontend-lint-typecheck` | ESLint + tsc -b | ✓ |
+| `admin-frontend-build` | Vite build | ✓ |
 | `python-test` | Ruff + pytest | ✓ |
 
 ## License

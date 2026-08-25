@@ -22,7 +22,6 @@ const Images = lazy(() => import('./pages/Images'))
 const ImageDetail = lazy(() => import('./pages/ImageDetail'))
 const Workspaces = lazy(() => import('./pages/Workspaces'))
 const Settings = lazy(() => import('./pages/Settings'))
-const Superadmin = lazy(() => import('./pages/Superadmin'))
 
 const qc = new QueryClient({
   defaultOptions: {
@@ -41,14 +40,6 @@ function PublicRoute({ children }: { children: ReactNode }) {
   const { token, loading } = useAuth()
   if (loading) return null
   if (token) return <Navigate to="/" replace />
-  return <>{children}</>
-}
-
-function SuperadminRoute({ children }: { children: ReactNode }) {
-  const { token, user, loading } = useAuth()
-  if (loading) return null
-  if (!token) return <Navigate to="/login" replace />
-  if (!user?.isSuperadmin) return <Navigate to="/" replace />
   return <>{children}</>
 }
 
@@ -82,7 +73,6 @@ export default function App() {
                 <Route path="/images/:id" element={<Lazy><ImageDetail /></Lazy>} />
                 <Route path="/workspaces" element={<Lazy><Workspaces /></Lazy>} />
                 <Route path="/settings" element={<Lazy><Settings /></Lazy>} />
-                <Route path="/superadmin" element={<SuperadminRoute><Lazy><Superadmin /></Lazy></SuperadminRoute>} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

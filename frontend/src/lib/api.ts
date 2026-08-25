@@ -1,5 +1,4 @@
 import type {
-  AccountStatus,
   ApiResponse,
   Stats,
   Identity,
@@ -11,9 +10,6 @@ import type {
   Team,
   Member,
   Paginated,
-  PlatformOverview,
-  PlatformTeam,
-  PlatformUser,
 } from '../types'
 import { getStoredLocale } from '../i18n/locale'
 
@@ -271,32 +267,5 @@ export const api = {
       await request<unknown>(`/workspaces/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
     },
     delete: (id: string) => request<void>(`/workspaces/${id}`, { method: 'DELETE' }),
-  },
-  platform: {
-    overview: () => request<PlatformOverview>('/platform/overview'),
-    teams: {
-      list: (params?: { page?: number; limit?: number; search?: string; status?: AccountStatus }) => {
-        const query = new URLSearchParams()
-        if (params?.page) query.set('page', String(params.page))
-        if (params?.limit) query.set('limit', String(params.limit))
-        if (params?.search) query.set('search', params.search)
-        if (params?.status) query.set('status', params.status)
-        return request<Paginated<PlatformTeam>>(`/platform/teams?${query}`)
-      },
-      update: (id: string, data: { status?: AccountStatus; planName?: Team['plan'] }) =>
-        request<Pick<PlatformTeam, 'id' | 'status' | 'planName'>>(`/platform/teams/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    },
-    users: {
-      list: (params?: { page?: number; limit?: number; search?: string; status?: AccountStatus }) => {
-        const query = new URLSearchParams()
-        if (params?.page) query.set('page', String(params.page))
-        if (params?.limit) query.set('limit', String(params.limit))
-        if (params?.search) query.set('search', params.search)
-        if (params?.status) query.set('status', params.status)
-        return request<Paginated<PlatformUser>>(`/platform/users?${query}`)
-      },
-      update: (id: string, status: AccountStatus) =>
-        request<Pick<PlatformUser, 'id' | 'firstName' | 'lastName' | 'email' | 'status'>>(`/platform/users/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
-    },
   },
 }

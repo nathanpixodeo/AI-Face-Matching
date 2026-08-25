@@ -65,9 +65,36 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  build-admin-frontend:
+    runs-on: ubuntu-latest
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set lowercase image name
+        run: echo "ADMIN_FRONTEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/admin-frontend" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.admin-frontend
+          push: true
+          tags: |
+            ${{ env.ADMIN_FRONTEND_IMAGE }}:${{ github.ref_name }}
+            ${{ env.ADMIN_FRONTEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
     runs-on: ubuntu-latest
-    needs: [build-api, build-ml]
+    needs: [build-api, build-ml, build-admin-frontend]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
@@ -78,7 +105,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker/docker-compose.prod.yml,docker/deploy.sh"
+          source: "docker/docker-compose.prod.yml,docker/deploy.sh,docker/nginx/admin.example.com.conf"
           target: /opt/ai-face-matching
           strip_components: 1
 

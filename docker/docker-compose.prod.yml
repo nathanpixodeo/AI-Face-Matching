@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   api:
     image: ${API_IMAGE:-ghcr.io/nathanpixodeo/ai-face-matching/api:latest}
@@ -19,6 +17,15 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+
+  admin-frontend:
+    image: ${ADMIN_FRONTEND_IMAGE:-ghcr.io/nathanpixodeo/ai-face-matching/admin-frontend:latest}
+    ports:
+      - "127.0.0.1:3001:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
 
   ml-service:
     image: ${ML_IMAGE:-ghcr.io/nathanpixodeo/ai-face-matching/ml:latest}

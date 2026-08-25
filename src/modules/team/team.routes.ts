@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { authenticate } from '../../plugins/auth';
+import { authenticate, requireActiveTeam } from '../../plugins/auth';
 import {
   getTeamHandler,
   updateTeamHandler,
@@ -12,6 +12,7 @@ import {
 
 export default async function teamRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate);
+  app.addHook('onRequest', requireActiveTeam);
 
   app.get('/api/team', {
     schema: { tags: ['Team'], summary: 'Get current team info', security: [{ Bearer: [] }] },

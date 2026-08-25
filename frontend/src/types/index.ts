@@ -4,6 +4,45 @@ export interface User {
   first_name: string
   last_name: string
   role: string
+  isSuperadmin: boolean
+}
+
+export type AccountStatus = 'active' | 'suspended'
+
+export interface PlatformOverview {
+  teams: { total: number; active: number; suspended: number }
+  users: { total: number; active: number; suspended: number; superadmins: number }
+  resources: { identities: number; images: number }
+}
+
+export interface PlatformTeam {
+  id: string
+  name: string
+  status: AccountStatus
+  planName: Team['plan']
+  owner: { id: string; firstName: string; lastName: string; email: string } | null
+  memberCount: number
+  usage: { identitiesCount: number; imagesCount: number; matchesToday: number; storageUsedMB: number }
+  createdAt: string
+}
+
+export interface PlatformUser {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: Member['role']
+  isSuperadmin: boolean
+  status: AccountStatus
+  team: { id: string; name: string } | null
+  createdAt: string
+}
+
+export interface Paginated<T> {
+  items: T[]
+  total: number
+  page: number
+  totalPages: number
 }
 
 export interface Team {

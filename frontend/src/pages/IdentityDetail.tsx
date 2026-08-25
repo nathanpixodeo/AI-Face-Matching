@@ -10,8 +10,10 @@ import { Modal } from '../components/ui/Modal'
 import { Avatar } from '../components/ui/Avatar'
 import { CardSkeleton } from '../components/ui/Skeleton'
 import { ArrowLeft, Edit3, Trash2 } from 'lucide-react'
+import { useI18n } from '../i18n/locale'
 
 export default function IdentityDetail() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -42,91 +44,92 @@ export default function IdentityDetail() {
     onSuccess: () => navigate('/identities'),
   })
 
-  if (isLoading) return <div className="grid grid-cols-3 gap-6"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>
+  if (isLoading) return <div className="grid grid-cols-3 gap-5"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>
   if (!identity) return null
 
   return (
-    <div className="space-y-6">
-      <button onClick={() => navigate('/identities')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to Identities
+    <div className="space-y-8">
+      <button onClick={() => navigate('/identities')} className="flex items-center gap-2 text-sm font-bold text-[#718096] transition-colors hover:text-primary-600">
+        <ArrowLeft className="h-4 w-4" /> {t('Back to identities')}
       </button>
 
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-6">
-            <Avatar name={identity.name} size="lg" />
+        <CardContent className="p-6 sm:p-8">
+          <div className="flex flex-col items-start gap-6 sm:flex-row">
+            <div className="rounded-2xl bg-[#f7fafc] p-1"><Avatar name={identity.name} size="lg" /></div>
             <div className="flex-1 min-w-0">
               {editing ? (
                 <div className="space-y-3 max-w-md">
-                  <Input value={editName} onChange={e => setEditName(e.target.value)} label="Name" />
+                  <Input value={editName} onChange={e => setEditName(e.target.value)} label={t('Name')} />
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
+                    <label className="block text-sm font-medium text-[#4a5568]">{t('Description')}</label>
                     <textarea
                       value={editDesc}
                       onChange={e => setEditDesc(e.target.value)}
                       rows={2}
-                      className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="block w-full rounded-lg border border-[#e2e8f0] bg-white px-4 py-3 text-sm text-[#2d3748] focus:border-primary-500 focus:outline-none"
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => update.mutate()} loading={update.isPending}>Save</Button>
-                    <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button>
+                    <Button size="sm" onClick={() => update.mutate()} loading={update.isPending}>{t('Save')}</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>{t('Cancel')}</Button>
                   </div>
                 </div>
               ) : (
                 <>
+                  <p className="bankco-eyebrow">{t('Identity profile')}</p>
                   <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-bold text-gray-900">{identity.name}</h1>
-                    <button onClick={() => { setEditName(identity.name); setEditDesc(identity.description || ''); setEditing(true) }} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+                    <h1 className="font-bankco-display text-2xl font-semibold tracking-[-.04em] text-[#1a202c]">{identity.name}</h1>
+                    <button aria-label={t('Edit {{name}}', { name: identity.name })} onClick={() => { setEditName(identity.name); setEditDesc(identity.description || ''); setEditing(true) }} className="bankco-icon-button h-8 w-8 border-0">
                       <Edit3 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setDeleteOpen(true)} className="p-1.5 rounded-lg text-gray-400 hover:text-danger-500 hover:bg-red-50">
+                    <button aria-label={t('Delete {{name}}', { name: identity.name })} onClick={() => setDeleteOpen(true)} className="bankco-icon-button h-8 w-8 border-0 hover:bg-danger-50 hover:text-danger-500">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  {identity.description && <p className="text-sm text-gray-500 mt-1">{identity.description}</p>}
+                  {identity.description && <p className="mt-2 text-sm leading-6 text-[#718096]">{identity.description}</p>}
                 </>
               )}
               <div className="flex items-center gap-4 mt-3">
-                <Badge variant="blue">{identity.faceCount} faces</Badge>
+                <Badge variant="blue">{t('{{count}} faces', { count: identity.faceCount })}</Badge>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <h2 className="text-lg font-semibold">Linked Faces</h2>
+      <div className="bankco-panel-header rounded-xl border border-[#edf2f7] bg-white"><div><p className="bankco-eyebrow">{t('Reference images')}</p><h2 className="font-bankco-display text-lg font-semibold tracking-[-.03em] text-[#1a202c]">{t('Linked faces')}</h2></div><Badge variant="blue">{t('{{count}} total', { count: identity.faceCount })}</Badge></div>
       {faces?.length ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {faces.map(face => (
-            <Card key={face._id} className="overflow-hidden">
-              <div className="aspect-square bg-gray-100 relative">
+            <Card key={face._id} className="overflow-hidden transition-transform hover:-translate-y-0.5">
+              <div className="relative aspect-square bg-[#edf2f7]">
                 <img src={`/api/images/${face.image?._id}/file`} alt="" className="w-full h-full object-cover" />
               </div>
-              <CardContent className="p-3 space-y-1">
-                <p className="text-xs text-gray-500 truncate">{face.image?.originalName}</p>
+              <CardContent className="space-y-2 p-4">
+                <p className="truncate text-xs font-medium text-[#718096]">{face.image?.originalName}</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">{Math.round(face.age)}y</span>
-                  <span className="text-xs text-gray-500">{face.gender}</span>
+                  <span className="text-xs text-[#718096]">{Math.round(face.age)}y</span>
+                  <span className="text-xs text-[#718096]">{face.gender}</span>
                 </div>
                 <Badge variant={face.status === 'confirmed' ? 'green' : face.status === 'matched' ? 'blue' : 'orange'}>
-                  {face.status}
+                  {t(face.status.charAt(0).toUpperCase() + face.status.slice(1))}
                 </Badge>
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-sm text-gray-500">No faces linked to this identity.</div>
+        <div className="bankco-panel py-12 text-center text-sm text-[#718096]">{t('No faces linked to this identity.')}</div>
       )}
 
-      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete Identity" size="sm">
+      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title={t('Delete Identity')} size="sm">
         <p className="text-sm text-gray-600 mb-6">
-          This will unlink all {identity.faceCount} faces from this identity. The faces will remain in the library as unmatched.
+          {t('This will unlink all {{count}} faces from this identity. The faces will remain in the library as unmatched.', { count: identity.faceCount })}
         </p>
         <div className="flex justify-end gap-3">
-          <Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-          <Button variant="danger" onClick={() => remove.mutate()} loading={remove.isPending}>Delete</Button>
+          <Button variant="secondary" onClick={() => setDeleteOpen(false)}>{t('Cancel')}</Button>
+          <Button variant="danger" onClick={() => remove.mutate()} loading={remove.isPending}>{t('Delete')}</Button>
         </div>
       </Modal>
     </div>

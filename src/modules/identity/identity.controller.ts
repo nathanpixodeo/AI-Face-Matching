@@ -8,7 +8,7 @@ export async function createIdentityHandler(request: FastifyRequest, reply: Fast
   const user = getAuthUser(request);
   const input = createIdentitySchema.parse(request.body);
   const identity = await identityService.createIdentity(user.teamId, input);
-  return reply.status(201).send(successResponse(identity, 'Identity created'));
+  return reply.status(201).send(successResponse(identity, request.t('response.identityCreated')));
 }
 
 export async function listIdentitiesHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -34,7 +34,7 @@ export async function updateIdentityHandler(
   const user = getAuthUser(request);
   const input = updateIdentitySchema.parse(request.body);
   const identity = await identityService.updateIdentity(user.teamId, request.params.id, input);
-  return reply.send(successResponse(identity, 'Identity updated'));
+  return reply.send(successResponse(identity, request.t('response.identityUpdated')));
 }
 
 export async function deleteIdentityHandler(
@@ -43,7 +43,7 @@ export async function deleteIdentityHandler(
 ) {
   const user = getAuthUser(request);
   await identityService.deleteIdentity(user.teamId, request.params.id);
-  return reply.send(successResponse(null, 'Identity deleted'));
+  return reply.send(successResponse(null, request.t('response.identityDeleted')));
 }
 
 export async function getIdentityFacesHandler(

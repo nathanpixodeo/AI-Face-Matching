@@ -4,6 +4,8 @@ export type ObjectId = Types.ObjectId;
 
 export type UserRole = 'owner' | 'admin' | 'member';
 
+export type AccountStatus = 'active' | 'suspended';
+
 export type PlanName = 'free' | 'pro' | 'enterprise';
 
 export type MappingStatus = 'auto' | 'confirmed' | 'manual' | 'unmatched';
@@ -19,6 +21,7 @@ export interface JwtPayload {
   email: string;
   teamId: string;
   role: UserRole;
+  isSuperadmin: boolean;
   iat?: number;
   exp?: number;
 }

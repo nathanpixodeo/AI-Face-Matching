@@ -4,9 +4,30 @@ import type { User } from '../types'
 
 function parseToken(token: string): User | null {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
+    const payload = JSON.parse(atob(token.split('.')[1])) as {
+      exp: number
+      userId?: string
+      user_id?: string
+      sub?: string
+      email: string
+      firstName?: string
+      first_name?: string
+      lastName?: string
+      last_name?: string
+      role?: string
+      isSuperadmin?: boolean
+    }
     if (payload.exp * 1000 < Date.now()) return null
-    return { _id: payload.user_id || payload.sub, email: payload.email, first_name: payload.first_name || '', last_name: payload.last_name || '', role: payload.role || 'member' }
+    const userId = payload.userId || payload.user_id || payload.sub
+    if (!userId) return null
+    return {
+      _id: userId,
+      email: payload.email,
+      first_name: payload.firstName || payload.first_name || '',
+      last_name: payload.lastName || payload.last_name || '',
+      role: payload.role || 'member',
+      isSuperadmin: payload.isSuperadmin === true,
+    }
   } catch {
     return null
   }

@@ -1,11 +1,12 @@
 import { Schema, model, Document, Types } from 'mongoose';
-import { TeamUsage } from '../types';
+import { AccountStatus, TeamUsage } from '../types';
 
 export interface ITeam extends Document {
   _id: Types.ObjectId;
   name: string;
   ownerId: Types.ObjectId;
   planId: Types.ObjectId;
+  status: AccountStatus;
   usage: TeamUsage;
   createdAt: Date;
   updatedAt: Date;
@@ -16,6 +17,7 @@ const teamSchema = new Schema<ITeam>(
     name: { type: String, required: true, trim: true },
     ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     planId: { type: Schema.Types.ObjectId, ref: 'Plan', required: true },
+    status: { type: String, enum: ['active', 'suspended'], default: 'active', index: true },
     usage: {
       identitiesCount: { type: Number, default: 0 },
       imagesCount: { type: Number, default: 0 },

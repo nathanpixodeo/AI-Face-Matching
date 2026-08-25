@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { LocaleProvider } from './i18n/locale'
 import { AppLayout } from './components/layout/AppLayout'
 import { AuthLayout } from './components/layout/AuthLayout'
 import type { ReactNode } from 'react'
@@ -21,6 +22,7 @@ const Images = lazy(() => import('./pages/Images'))
 const ImageDetail = lazy(() => import('./pages/ImageDetail'))
 const Workspaces = lazy(() => import('./pages/Workspaces'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Superadmin = lazy(() => import('./pages/Superadmin'))
 
 const qc = new QueryClient({
   defaultOptions: {
@@ -42,6 +44,14 @@ function PublicRoute({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+function SuperadminRoute({ children }: { children: ReactNode }) {
+  const { token, user, loading } = useAuth()
+  if (loading) return null
+  if (!token) return <Navigate to="/login" replace />
+  if (!user?.isSuperadmin) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
 function Lazy({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" /></div>}>{children}</Suspense>
 }
@@ -49,9 +59,10 @@ function Lazy({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <QueryClientProvider client={qc}>
-      <BrowserRouter>
-        <AuthProvider>
-          <ToastProvider>
+      <LocaleProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <ToastProvider>
             <Routes>
               <Route element={<PublicRoute><AuthLayout /></PublicRoute>}>
                 <Route path="/login" element={<Lazy><Login /></Lazy>} />
@@ -71,13 +82,15 @@ export default function App() {
                 <Route path="/images/:id" element={<Lazy><ImageDetail /></Lazy>} />
                 <Route path="/workspaces" element={<Lazy><Workspaces /></Lazy>} />
                 <Route path="/settings" element={<Lazy><Settings /></Lazy>} />
+                <Route path="/superadmin" element={<SuperadminRoute><Lazy><Superadmin /></Lazy></SuperadminRoute>} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </ToastProvider>
-        </AuthProvider>
-      </BrowserRouter>
+            </ToastProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </LocaleProvider>
     </QueryClientProvider>
   )
 }

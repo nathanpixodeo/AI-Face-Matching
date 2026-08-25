@@ -1,70 +1,131 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, Upload, Search, Image, Layers, Settings, ChevronLeft } from 'lucide-react'
+import {
+  Building2,
+  FileImage,
+  LayoutDashboard,
+  Layers3,
+  PanelLeftClose,
+  ScanSearch,
+  Settings,
+  ShieldCheck,
+  UploadCloud,
+  UsersRound,
+} from 'lucide-react'
 import { useState } from 'react'
 import { clsx } from 'clsx'
 import { TopBar } from './TopBar'
+import { useAuth } from '../../contexts/AuthContext'
+import { useI18n } from '../../i18n/locale'
 
-const navItems = [
+const workspaceItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/identities', icon: Users, label: 'Identities' },
-  { to: '/upload', icon: Upload, label: 'Upload' },
-  { to: '/match', icon: Search, label: 'Face Match' },
-  { to: '/images', icon: Image, label: 'Images' },
-  { to: '/workspaces', icon: Layers, label: 'Workspaces' },
+  { to: '/identities', icon: UsersRound, label: 'Identities' },
+  { to: '/upload', icon: UploadCloud, label: 'Upload images' },
+  { to: '/match', icon: ScanSearch, label: 'Face match' },
+  { to: '/images', icon: FileImage, label: 'Image library' },
+  { to: '/workspaces', icon: Layers3, label: 'Workspaces' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
+function Wordmark({ compact, t }: { compact: boolean; t: (key: string) => string }) {
+  return (
+    <div className="flex items-center gap-3 overflow-hidden">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#1a202c] text-sm font-bold text-white shadow-[0_8px_20px_rgba(26,32,44,.16)]">
+        <span className="relative">FM<span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#22c55e]" /></span>
+      </div>
+      {!compact && <div className="min-w-0"><p className="font-bankco-display text-lg font-semibold tracking-[-.04em] text-[#1a202c]">FaceMatch</p><p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.14em] text-[#718096]">{t('Identity operations')}</p></div>}
+    </div>
+  )
+}
+
 export function AppLayout() {
+  const { user } = useAuth()
+  const { t } = useI18n()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {mobileOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMobileOpen(false)} />}
+  const sidebarWidth = collapsed ? 'xl:w-[92px]' : 'xl:w-[308px]'
+  const contentOffset = collapsed ? 'xl:ml-[92px]' : 'xl:ml-[308px]'
 
-      <aside className={clsx(
-        'fixed top-0 left-0 z-50 h-full bg-white border-r border-gray-200 transition-all duration-300 flex flex-col',
-        collapsed ? 'w-16' : 'w-64',
-        mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      )}>
-        <div className={clsx('flex items-center h-16 px-4 border-b border-gray-100 shrink-0', collapsed && 'justify-center')}>
-          {!collapsed && <span className="text-xl font-bold text-primary-600">FaceMatch</span>}
-          {collapsed && <span className="text-xl font-bold text-primary-600">FM</span>}
+  return (
+    <div className="min-h-screen bg-[#f7fafc]">
+      {mobileOpen && <button aria-label={t('Close navigation')} className="fixed inset-0 z-40 bg-[#1d1e24]/40 backdrop-blur-[1px] xl:hidden" onClick={() => setMobileOpen(false)} />}
+
+      <aside
+        className={clsx(
+          'app-sidebar fixed left-0 top-0 z-50 flex h-full w-[308px] flex-col border-r border-[#f0f1f2] bg-white text-[#1a202c] shadow-[8px_0_32px_rgba(42,49,60,.025)] transition-[width,transform] duration-300',
+          sidebarWidth,
+        )}
+        data-mobile-open={mobileOpen}
+      >
+        <div className={clsx('relative flex h-[108px] shrink-0 items-center border-b border-[#f0f1f2] px-8', collapsed && 'xl:justify-center xl:px-4')}>
+          <Wordmark compact={collapsed} t={t} />
+          <button
+            onClick={() => setCollapsed((value) => !value)}
+            aria-label={t(collapsed ? 'Expand navigation' : 'Collapse navigation')}
+            title={t(collapsed ? 'Expand navigation' : 'Collapse navigation')}
+            className="absolute -right-3 hidden h-10 w-6 place-items-center rounded-r-full bg-primary-500 text-white shadow-[4px_3px_10px_rgba(34,197,94,.22)] transition-colors hover:bg-primary-600 xl:grid"
+          >
+            <PanelLeftClose className={clsx('h-4 w-4 transition-transform duration-300', collapsed && 'rotate-180')} />
+          </button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {navItems.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              onClick={() => setMobileOpen(false)}
-              className={({ isActive }) => clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
-                collapsed && 'justify-center px-2'
-              )}
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </NavLink>
-          ))}
+        <nav className={clsx('flex-1 overflow-y-auto px-8 py-7', collapsed && 'xl:px-4')}>
+          {!collapsed && <p className="border-b border-[#edf2f7] pb-2 text-sm font-medium text-[#4a5568]">{t('Menu')}</p>}
+          {collapsed && <div className="mx-auto mb-3 h-px w-8 bg-[#edf2f7]" />}
+          <ul className="space-y-1.5 pt-3">
+            {workspaceItems.map((item) => (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  end={item.to === '/'}
+                  onClick={() => setMobileOpen(false)}
+                  title={collapsed ? t(item.label) : undefined}
+                  className={({ isActive }) => clsx(
+                    'group relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-medium transition-all duration-200',
+                    isActive ? 'bg-[#f1fff5] text-[#1a202c]' : 'text-[#718096] hover:bg-[#f7fafc] hover:text-[#1a202c]',
+                    collapsed && 'justify-center px-0',
+                  )}
+                >
+                  {({ isActive }) => <>
+                    <item.icon className={clsx('h-[19px] w-[19px] shrink-0 transition-colors', isActive ? 'text-primary-500' : 'text-[#718096] group-hover:text-[#1a202c]')} />
+                    {!collapsed && <span>{t(item.label)}</span>}
+                    {isActive && !collapsed && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-500" />}
+                  </>}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+
+          {user?.isSuperadmin && <>
+            {!collapsed && <p className="mt-9 border-b border-[#edf2f7] pb-2 text-sm font-medium text-[#4a5568]">{t('Platform')}</p>}
+            <ul className="pt-3">
+              <li>
+                <NavLink
+                  to="/superadmin"
+                  onClick={() => setMobileOpen(false)}
+                  title={collapsed ? t('Platform') : undefined}
+                  className={({ isActive }) => clsx(
+                    'group relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-medium transition-all duration-200',
+                    isActive ? 'bg-[#f1fff5] text-[#1a202c]' : 'text-[#718096] hover:bg-[#f7fafc] hover:text-[#1a202c]',
+                    collapsed && 'justify-center px-0',
+                  )}
+                >
+                  {({ isActive }) => <><ShieldCheck className={clsx('h-[19px] w-[19px] shrink-0', isActive ? 'text-primary-500' : 'text-[#718096]')} />{!collapsed && <span>{t('Platform control')}</span>}{isActive && !collapsed && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-500" />}</>}
+                </NavLink>
+              </li>
+            </ul>
+          </>}
         </nav>
 
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex items-center justify-center h-12 border-t border-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0"
-        >
-          <ChevronLeft className={clsx('w-5 h-5 transition-transform', collapsed && 'rotate-180')} />
-        </button>
+        {!collapsed && <div className="m-6 mt-0 rounded-xl bg-[#f7fafc] p-4 transition-opacity xl:opacity-100">
+          <div className="flex items-center gap-3"><div className="grid h-8 w-8 place-items-center rounded-lg bg-white text-primary-500 shadow-sm"><Building2 className="h-4 w-4" /></div><div><p className="text-xs font-bold text-[#2d3748]">{t('Workspace ready')}</p><p className="mt-0.5 text-[11px] text-[#718096]">{t('Secure image processing')}</p></div></div>
+        </div>}
       </aside>
 
-      <div className={clsx('transition-all duration-300', collapsed ? 'lg:ml-16' : 'lg:ml-64')}>
+      <div className={clsx('min-w-0 transition-[margin] duration-300', contentOffset)}>
         <TopBar onMenuClick={() => setMobileOpen(true)} />
-
-        <main className="p-4 lg:p-6 max-w-7xl mx-auto">
-          <Outlet />
-        </main>
+        <main className="mx-auto w-full max-w-[1680px] px-4 py-7 sm:px-7 xl:px-12 xl:py-10"><Outlet /></main>
       </div>
     </div>
   )

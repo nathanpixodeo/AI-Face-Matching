@@ -1,5 +1,5 @@
 import { Schema, model, Document, Types } from 'mongoose';
-import { UserRole } from '../types';
+import { AccountStatus, UserRole } from '../types';
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
@@ -9,6 +9,8 @@ export interface IUser extends Document {
   password: string;
   teamId: Types.ObjectId;
   role: UserRole;
+  isSuperadmin: boolean;
+  status: AccountStatus;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   createdAt: Date;
@@ -23,6 +25,8 @@ const userSchema = new Schema<IUser>(
     password: { type: String, required: true, select: false },
     teamId: { type: Schema.Types.ObjectId, ref: 'Team', index: true },
     role: { type: String, enum: ['owner', 'admin', 'member'], default: 'member' },
+    isSuperadmin: { type: Boolean, default: false, index: true },
+    status: { type: String, enum: ['active', 'suspended'], default: 'active', index: true },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
   },

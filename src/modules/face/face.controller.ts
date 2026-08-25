@@ -57,5 +57,5 @@ export async function deleteImageHandler(
 ) {
   const user = getAuthUser(request);
   await faceService.deleteImage(user.teamId, request.params.id);
-  return reply.send(successResponse(null, 'Image deleted'));
+  return reply.send(successResponse(null, request.t('response.imageDeleted')));
 }

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { authenticate } from '../../plugins/auth';
+import { authenticate, requireActiveTeam } from '../../plugins/auth';
 import {
   createIdentityHandler,
   listIdentitiesHandler,
@@ -16,6 +16,7 @@ const paramSchema = {
 
 export default async function identityRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate);
+  app.addHook('onRequest', requireActiveTeam);
 
   app.post('/api/identities', {
     schema: {

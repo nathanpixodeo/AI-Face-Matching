@@ -7,21 +7,23 @@ import { Avatar } from '../components/ui/Avatar'
 import { Search, Camera, AlertCircle, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useToast } from '../contexts/ToastContext'
+import { useI18n } from '../i18n/locale'
 
 export default function FaceMatch() {
   const { toast } = useToast()
+  const { t } = useI18n()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const matchMutation = useMutation({
     mutationFn: () => api.faces.match(file!),
-    onError: (err: Error) => toast('error', err.message || 'Match failed'),
+    onError: (err: Error) => toast('error', err.message || t('Match failed')),
   })
 
   function handleFile(f: File) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
-      toast('error', 'Unsupported format. Use JPG, PNG, or WEBP')
+      toast('error', t('Unsupported format. Use JPG, PNG, or WEBP'))
       return
     }
     setFile(f)
@@ -30,19 +32,23 @@ export default function FaceMatch() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Face Match</h1>
-        <p className="text-sm text-gray-500 mt-1">Upload a photo to find matching identities</p>
+    <div className="mx-auto max-w-6xl space-y-8">
+      <div className="bankco-page-header">
+        <div>
+          <p className="bankco-eyebrow">{t('Identity search')}</p>
+          <h1 className="bankco-page-title">{t('Face match')}</h1>
+          <p className="bankco-page-description">{t('Compare one photo with confirmed identities in this workspace.')}</p>
+        </div>
+        <div className="hidden items-center gap-2 rounded-lg bg-[#f7fafc] px-4 py-3 text-sm font-bold text-[#4a5568] sm:flex"><Search className="h-4 w-4 text-primary-500" />{t('One query photo at a time')}</div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-0">
             {!preview ? (
               <div
                 onClick={() => inputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center cursor-pointer hover:border-gray-400 hover:bg-gray-50/50 transition-all"
+                className="bankco-dropzone m-5 cursor-pointer p-12 text-center transition-colors hover:border-primary-400 sm:m-6"
               >
                 <input
                   ref={inputRef}
@@ -51,20 +57,20 @@ export default function FaceMatch() {
                   className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
                 />
-                <Camera className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-lg font-medium text-gray-900">Upload a photo</p>
-                <p className="text-sm text-gray-500 mt-1">Single image with a clear face</p>
+                <div className="relative z-10 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-white text-primary-600 shadow-[0_10px_24px_rgba(42,49,60,.08)]"><Camera className="h-6 w-6" /></div>
+                <p className="relative z-10 font-bankco-display text-xl font-semibold tracking-[-.035em] text-[#1a202c]">{t('Select a query photo')}</p>
+                <p className="relative z-10 mt-1 text-sm text-[#718096]">{t('One clear face. JPG, PNG, or WEBP.')}</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                <img src={preview} alt="Query" className="w-full rounded-xl max-h-80 object-contain bg-gray-100" />
+              <div className="space-y-4 p-5 sm:p-6">
+                <div className="rounded-lg bg-[#1a202c] p-3"><img src={preview} alt={t('Query')} className="max-h-80 w-full rounded-md object-contain" /></div>
 
                 <div className="flex gap-3">
                   <Button onClick={() => matchMutation.mutate()} loading={matchMutation.isPending} className="flex-1">
-                    <Search className="w-4 h-4 mr-2" />Find Matches
+                    <Search className="w-4 h-4 mr-2" />{t('Find Matches')}
                   </Button>
                   <Button variant="secondary" onClick={() => { setFile(null); setPreview(null); matchMutation.reset() }}>
-                    Reset
+                    {t('Reset')}
                   </Button>
                 </div>
               </div>
@@ -73,22 +79,22 @@ export default function FaceMatch() {
         </Card>
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Results</h2>
+          <div className="bankco-panel-header rounded-xl border border-[#edf2f7] bg-white"><div><p className="bankco-eyebrow">{t('Candidates')}</p><h2 className="font-bankco-display text-lg font-semibold tracking-[-.03em] text-[#1a202c]">{t('Results')}</h2></div>{matchMutation.isSuccess && <span className="text-xs font-bold text-[#718096]">{t('Ranked by similarity')}</span>}</div>
 
           {matchMutation.isPending && (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-primary-600 mb-4" />
-              <p className="text-sm">Searching for matches...</p>
+            <div className="bankco-panel flex flex-col items-center justify-center py-16 text-[#718096]">
+              <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[#edf2f7] border-t-primary-500" />
+              <p className="text-sm font-medium">{t('Searching for matches...')}</p>
             </div>
           )}
 
           {matchMutation.isError && (
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-5">
                 <div className="flex items-center gap-3">
                   <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
                   <p className="text-sm text-red-600 flex-1">{matchMutation.error.message}</p>
-                  <Button variant="ghost" size="sm" onClick={() => matchMutation.mutate()}><RefreshCw className="w-4 h-4 mr-1" />Retry</Button>
+                  <Button variant="ghost" size="sm" onClick={() => matchMutation.mutate()}><RefreshCw className="w-4 h-4 mr-1" />{t('Retry')}</Button>
                 </div>
               </CardContent>
             </Card>
@@ -98,17 +104,17 @@ export default function FaceMatch() {
             <div className="space-y-3">
               {matchMutation.data.map((r, i) => (
                 <Link key={i} to={`/identities/${r.identity._id}`}>
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardContent className="p-4 flex items-center gap-4">
+                  <Card className="cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_12px_25px_rgba(42,49,60,.07)]">
+                    <CardContent className="flex items-center gap-4 p-4">
                       <Avatar name={r.identity.name} size="md" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900">{r.identity.name}</p>
-                        {r.identity.description && <p className="text-xs text-gray-500 truncate">{r.identity.description}</p>}
+                        <p className="font-bold text-[#2d3748]">{r.identity.name}</p>
+                        {r.identity.description && <p className="truncate text-xs text-[#718096]">{r.identity.description}</p>}
                       </div>
-                      <div className={`text-lg font-bold px-3 py-1.5 rounded-lg ${
-                        r.similarity >= 80 ? 'bg-success-50 text-success-600' :
-                        r.similarity >= 60 ? 'bg-yellow-50 text-yellow-700' :
-                        'bg-orange-50 text-orange-600'
+                      <div className={`rounded-lg px-3 py-2 text-right font-bankco-display text-lg font-semibold tabular-nums ${
+                        r.similarity >= 80 ? 'bg-[#d9fbe6] text-success-600' :
+                        r.similarity >= 60 ? 'bg-[#fffbea] text-[#a16207]' :
+                        'bg-[#fff0eb] text-accent-500'
                       }`}>
                         {Math.round(r.similarity)}%
                       </div>
@@ -118,22 +124,18 @@ export default function FaceMatch() {
               ))}
             </div>
           ) : matchMutation.isSuccess && (
-            <Card>
-              <CardContent className="p-12 text-center text-sm text-gray-500">
-                <Camera className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-                <p>No matching identities found.</p>
-                <p className="text-xs mt-1">The person may not be registered yet.</p>
-              </CardContent>
-            </Card>
+            <div className="bankco-panel p-12 text-center text-sm text-[#718096]">
+                <Camera className="mx-auto mb-3 h-10 w-10 text-[#cbd5e0]" />
+                <p>{t('No matching identities found.')}</p>
+                <p className="text-xs mt-1">{t('The person may not be registered yet.')}</p>
+            </div>
           )}
 
           {!matchMutation.isPending && !matchMutation.isSuccess && !matchMutation.isError && (
-            <Card>
-              <CardContent className="p-12 text-center text-sm text-gray-400">
-                <Search className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-                <p>Upload a photo and click "Find Matches"</p>
-              </CardContent>
-            </Card>
+            <div className="bankco-panel p-12 text-center text-sm text-[#718096]">
+                <Search className="mx-auto mb-3 h-10 w-10 text-[#cbd5e0]" />
+                <p>{t('Upload a photo and click "Find Matches"')}</p>
+            </div>
           )}
         </div>
       </div>

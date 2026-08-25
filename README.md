@@ -108,9 +108,27 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 | Face Match | `POST /api/faces/match`, `GET /api/faces`, `GET /api/faces/:id`, `GET /api/faces/stats` |
 | Images | `GET /api/images`, `GET /api/images/:id`, `DELETE /api/images/:id` |
 | Workspaces | `GET/POST /api/workspaces`, `GET/PUT/DELETE /api/workspaces/:id` |
+| Platform | `GET /api/platform/overview`, `GET/PUT /api/platform/teams`, `GET/PUT /api/platform/users` (superadmin only) |
 | Health | `GET /api/health` |
 
 Full interactive docs at `/docs` (Swagger UI).
+
+## Localization
+
+FaceMatch currently supports English (`en`), Vietnamese (`vi`), and French (`fr`) across the React application and Fastify API.
+
+- The frontend language switcher persists the choice in `facematch.locale`, updates the document language, and sends `Accept-Language` plus `X-Locale` with every API request.
+- The API prefers `X-Locale`, then negotiates `Accept-Language`, falls back to English, and returns `Content-Language` on every response.
+- API success, known domain errors, and validation messages use the request locale without changing response data contracts.
+- The selector uses inline SVG flags for English (United Kingdom), Vietnamese, and French choices; it requires no image asset service or third-party flag package.
+
+### Add another locale
+
+1. Add the locale code and display name to `frontend/src/i18n/locale.tsx`.
+2. Add its frontend catalog and optional inline flag in `frontend/src/components/ui/LocaleFlag.tsx`.
+3. Add the matching typed API catalog in `src/i18n/messages.ts`.
+
+No route, controller, or API-client rewrite is required for a new language.
 
 ## Frontend Pages
 
@@ -130,6 +148,7 @@ Full interactive docs at `/docs` (Swagger UI).
 | `/images/:id` | Image Detail | Yes | Viewer + bbox face overlays |
 | `/workspaces` | Workspaces | Yes | Workspace CRUD |
 | `/settings` | Settings | Yes | Tabs: General, Members, Plan |
+| `/superadmin` | Superadmin | Superadmin | Platform overview, team plans/status, and user status |
 
 ## Business Flow
 
@@ -164,7 +183,19 @@ npm run format       # Prettier format
 npm run typecheck    # TypeScript type check (tsc --noEmit)
 npm test             # Run Jest tests (38 tests)
 npm run test:watch   # Jest watch mode
+npm run grant-superadmin -- user@example.com  # Promote an existing account after npm run build
 ```
+
+### Superadmin Bootstrap
+
+Create the first account through normal registration, then grant the platform role from a trusted machine with database access:
+
+```bash
+npm run build
+npm run grant-superadmin -- admin@example.com
+```
+
+The command updates only the existing account's `isSuperadmin` flag. It does not change the user's team role. Sign out and sign in again after the command so the new JWT includes platform access.
 
 ### Frontend
 ```bash

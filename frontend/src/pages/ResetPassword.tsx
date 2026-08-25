@@ -3,8 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { useI18n } from '../i18n/locale'
 
 export default function ResetPassword() {
+  const { t } = useI18n()
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
@@ -23,7 +25,7 @@ export default function ResetPassword() {
       setDone(true)
       setTimeout(() => navigate('/login'), 2000)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Reset failed')
+      setError(err instanceof Error ? err.message : t('Reset failed'))
     } finally {
       setLoading(false)
     }
@@ -31,50 +33,51 @@ export default function ResetPassword() {
 
   if (done) {
     return (
-      <div className="text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto">
+      <div className="space-y-4 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-[#d9fbe6] text-primary-600">
           <CheckCircle className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Password reset</h1>
-        <p className="text-sm text-gray-500">Your password has been updated. Redirecting to login...</p>
+        <h1 className="font-bankco-display text-3xl font-semibold tracking-[-.045em] text-[#1a202c]">{t('Password reset.')}</h1>
+        <p className="text-base leading-7 text-[#718096]">{t('Your password has been updated. Redirecting to login...')}</p>
       </div>
     )
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="text-center mb-2">
-        <h1 className="text-2xl font-bold text-gray-900">Set new password</h1>
-        <p className="text-sm text-gray-500 mt-1">Enter your new password below</p>
+      <div className="mb-8 text-center">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[.13em] text-primary-600">{t('Account recovery')}</p>
+        <h1 className="font-bankco-display text-3xl font-semibold tracking-[-.045em] text-[#1a202c]">{t('Set new password.')}</h1>
+        <p className="mt-2 text-base font-medium text-[#718096]">{t('Choose a new password for your workspace')}</p>
       </div>
 
-      {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{error}</div>}
+      {error && <div className="rounded-lg border border-[#fcDEDE] bg-[#fff7f7] px-4 py-3 text-sm font-medium text-[#dd3333]">{error}</div>}
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">New password</label>
+        <label className="block text-sm font-medium text-[#4a5568]">{t('New password')}</label>
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-[#a0aec0]">
             <Lock className="w-4 h-4" />
           </div>
           <input
             type={showPw ? 'text' : 'password'}
-            placeholder="Min 8 characters"
+            placeholder={t('Min 8 characters')}
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="block w-full rounded-lg border border-gray-300 bg-white pl-10 pr-10 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="block min-h-14 w-full rounded-lg border border-[#e2e8f0] bg-white py-3.5 pl-11 pr-11 text-base text-[#2d3748] placeholder:text-[#a0aec0] focus:border-primary-500 focus:outline-none"
             required
             minLength={8}
           />
-          <button type="button" onClick={() => setShowPw(!showPw)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={() => setShowPw(!showPw)} className="absolute inset-y-0 right-0 flex items-center pr-4 text-[#a0aec0] hover:text-[#4a5568]">
             {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      <Button type="submit" className="w-full" loading={loading}>Reset password</Button>
+      <Button type="submit" className="w-full" loading={loading}>{t('Reset password')}</Button>
 
-      <p className="text-center text-sm text-gray-500">
-        <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">Back to login</Link>
+      <p className="text-center text-sm text-[#718096]">
+        <Link to="/login" className="font-bold text-primary-600 hover:text-primary-700">{t('Back to login')}</Link>
       </p>
     </form>
   )

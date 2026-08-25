@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { authenticate } from '../../plugins/auth';
+import { authenticate, requireActiveTeam } from '../../plugins/auth';
 import {
   createWorkspaceHandler,
   listWorkspacesHandler,
@@ -15,6 +15,7 @@ const paramSchema = {
 
 export default async function workspaceRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate);
+  app.addHook('onRequest', requireActiveTeam);
 
   app.post('/api/workspaces', {
     schema: {

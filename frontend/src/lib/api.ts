@@ -1,11 +1,29 @@
-import type { ApiResponse, Stats, Identity, Face, Image, UploadBatch, MatchResult, Workspace, Team, Member } from '../types'
+import type {
+  AccountStatus,
+  ApiResponse,
+  Stats,
+  Identity,
+  Face,
+  Image,
+  UploadBatch,
+  MatchResult,
+  Workspace,
+  Team,
+  Member,
+  Paginated,
+  PlatformOverview,
+  PlatformTeam,
+  PlatformUser,
+} from '../types'
+import { getStoredLocale } from '../i18n/locale'
 
 interface AuthUser {
-  _id: string
+  id: string
   email: string
-  first_name: string
-  last_name: string
+  firstName: string
+  lastName: string
   role: string
+  isSuperadmin: boolean
 }
 
 interface AuthResult {
@@ -13,11 +31,128 @@ interface AuthResult {
   token: string
 }
 
+interface BackendTeam {
+  id: string
+  name: string
+  plan: {
+    name: string
+    limits: {
+      maxIdentities: number
+      maxImages: number
+      maxMatchesPerDay: number
+      maxStorageMB: number
+      maxTeamMembers: number
+      maxFilesPerUpload: number
+    }
+  } | null
+  usage: {
+    identitiesCount: number
+    imagesCount: number
+    matchesToday: number
+    storageUsedMB: number
+  }
+}
+
+interface BackendMember {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: Member['role']
+  createdAt: string
+}
+
+interface BackendIdentity {
+  id: string
+  name: string
+  description?: string | null
+  avatarFaceId?: string | null
+  facesCount: number
+  createdAt: string
+  updatedAt?: string
+}
+
+interface BackendWorkspace {
+  id: string
+  name: string
+  notes?: string | null
+  status: boolean
+  createdAt: string
+  updatedAt?: string
+}
+
 const BASE = '/api'
+
+function normalizeTeam(team: BackendTeam): Team {
+  const limits = team.plan?.limits
+  const planName = team.plan?.name
+  const plan: Team['plan'] = planName === 'pro' || planName === 'enterprise' ? planName : 'free'
+
+  return {
+    _id: team.id,
+    name: team.name,
+    plan,
+    members: [],
+    usage: {
+      identities: team.usage.identitiesCount,
+      images: team.usage.imagesCount,
+      matchesToday: team.usage.matchesToday,
+      storage: team.usage.storageUsedMB * 1048576,
+    },
+    limits: {
+      identities: limits?.maxIdentities ?? Infinity,
+      images: limits?.maxImages ?? Infinity,
+      matchesPerDay: limits?.maxMatchesPerDay ?? Infinity,
+      storage: limits ? limits.maxStorageMB * 1048576 : Infinity,
+      members: limits?.maxTeamMembers ?? Infinity,
+      filesPerUpload: limits?.maxFilesPerUpload ?? Infinity,
+    },
+  }
+}
+
+function normalizeMember(member: BackendMember): Member {
+  return {
+    _id: member.id,
+    user: {
+      _id: member.id,
+      email: member.email,
+      first_name: member.firstName,
+      last_name: member.lastName,
+      role: member.role,
+      isSuperadmin: false,
+    },
+    role: member.role,
+    joinedAt: member.createdAt,
+  }
+}
+
+function normalizeIdentity(identity: BackendIdentity): Identity {
+  return {
+    _id: identity.id,
+    name: identity.name,
+    description: identity.description ?? undefined,
+    avatarFaceId: identity.avatarFaceId ?? undefined,
+    faceCount: identity.facesCount,
+    createdAt: identity.createdAt,
+    updatedAt: identity.updatedAt ?? identity.createdAt,
+  }
+}
+
+function normalizeWorkspace(workspace: BackendWorkspace): Workspace {
+  return {
+    _id: workspace.id,
+    name: workspace.name,
+    notes: workspace.notes ?? undefined,
+    status: workspace.status ? 'active' : 'inactive',
+    createdAt: workspace.createdAt,
+  }
+}
 
 async function request<T>(url: string, opts?: RequestInit): Promise<T> {
   const token = localStorage.getItem('token')
   const headers: Record<string, string> = {}
+  headers['Accept-Language'] = getStoredLocale()
+  headers['X-Locale'] = getStoredLocale()
   if (token) headers['Authorization'] = `Bearer ${token}`
   if (opts?.body && typeof opts.body === 'string') headers['Content-Type'] = 'application/json'
 
@@ -32,36 +167,55 @@ export const api = {
     login: (data: { email: string; password: string }) =>
       request<AuthResult>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
     register: (data: { first_name: string; last_name: string; email: string; password: string; team_name: string }) =>
-      request<AuthResult>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+      request<AuthResult>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          firstName: data.first_name,
+          lastName: data.last_name,
+          email: data.email,
+          password: data.password,
+          teamName: data.team_name,
+        }),
+      }),
     forgotPassword: (email: string) =>
       request<{ token: string }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
     resetPassword: (token: string, password: string) =>
       request<null>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
   },
   team: {
-    get: () => request<Team>('/team'),
-    update: (data: Partial<Team>) => request<Team>('/team', { method: 'PUT', body: JSON.stringify(data) }),
+    get: async () => normalizeTeam(await request<BackendTeam>('/team')),
+    update: async (data: Pick<Team, 'name'>) => {
+      await request<unknown>('/team', { method: 'PUT', body: JSON.stringify({ name: data.name }) })
+    },
     members: {
-      list: () => request<Member[]>('/team/members'),
-      add: (data: { email: string; role: string }) => request<Member>('/team/members', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, role: string) => request<Member>(`/team/members/${id}`, { method: 'PUT', body: JSON.stringify({ role }) }),
+      list: async () => (await request<BackendMember[]>('/team/members')).map(normalizeMember),
+      add: async (data: { email: string; role: string }) => {
+        await request<unknown>('/team/members', { method: 'POST', body: JSON.stringify(data) })
+      },
+      update: async (id: string, role: string) => {
+        await request<unknown>(`/team/members/${id}`, { method: 'PUT', body: JSON.stringify({ role }) })
+      },
       remove: (id: string) => request<void>(`/team/members/${id}`, { method: 'DELETE' }),
     },
-    plan: (plan: string) => request<Team>('/team/plan', { method: 'PUT', body: JSON.stringify({ plan }) }),
+    plan: async (plan: string) => {
+      await request<unknown>('/team/plan', { method: 'PUT', body: JSON.stringify({ planName: plan }) })
+    },
   },
   identities: {
-    list: (params?: { page?: number; limit?: number; search?: string }) => {
+    list: async (params?: { page?: number; limit?: number; search?: string }) => {
       const q = new URLSearchParams()
       if (params?.page) q.set('page', String(params.page))
       if (params?.limit) q.set('limit', String(params.limit))
       if (params?.search) q.set('search', params.search)
-      return request<{ items: Identity[]; total: number }>(`/identities?${q}`)
+      const result = await request<Paginated<BackendIdentity>>(`/identities?${q}`)
+      return { ...result, items: result.items.map(normalizeIdentity) }
     },
-    get: (id: string) => request<Identity>(`/identities/${id}`),
-    create: (data: { name: string; description?: string }) =>
-      request<Identity>('/identities', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: Partial<Identity>) =>
-      request<Identity>(`/identities/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    get: async (id: string) => normalizeIdentity(await request<BackendIdentity>(`/identities/${id}`)),
+    create: async (data: { name: string; description?: string }) =>
+      normalizeIdentity(await request<BackendIdentity>('/identities', { method: 'POST', body: JSON.stringify(data) })),
+    update: async (id: string, data: Pick<Identity, 'name' | 'description'>) => {
+      await request<unknown>(`/identities/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+    },
     delete: (id: string) => request<void>(`/identities/${id}`, { method: 'DELETE' }),
     faces: (id: string) => request<Face[]>(`/identities/${id}/faces`),
   },
@@ -104,12 +258,45 @@ export const api = {
     delete: (id: string) => request<void>(`/images/${id}`, { method: 'DELETE' }),
   },
   workspaces: {
-    list: () => request<Workspace[]>('/workspaces'),
-    create: (data: { name: string; notes?: string }) =>
-      request<Workspace>('/workspaces', { method: 'POST', body: JSON.stringify(data) }),
-    get: (id: string) => request<Workspace>(`/workspaces/${id}`),
-    update: (id: string, data: Partial<Workspace>) =>
-      request<Workspace>(`/workspaces/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    list: async () => (await request<Paginated<BackendWorkspace>>('/workspaces')).items.map(normalizeWorkspace),
+    create: async (data: { name: string; notes?: string }) =>
+      normalizeWorkspace(await request<BackendWorkspace>('/workspaces', { method: 'POST', body: JSON.stringify(data) })),
+    get: async (id: string) => normalizeWorkspace(await request<BackendWorkspace>(`/workspaces/${id}`)),
+    update: async (id: string, data: Partial<Workspace>) => {
+      const payload = {
+        name: data.name,
+        notes: data.notes,
+        status: data.status === undefined ? undefined : data.status === 'active',
+      }
+      await request<unknown>(`/workspaces/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+    },
     delete: (id: string) => request<void>(`/workspaces/${id}`, { method: 'DELETE' }),
+  },
+  platform: {
+    overview: () => request<PlatformOverview>('/platform/overview'),
+    teams: {
+      list: (params?: { page?: number; limit?: number; search?: string; status?: AccountStatus }) => {
+        const query = new URLSearchParams()
+        if (params?.page) query.set('page', String(params.page))
+        if (params?.limit) query.set('limit', String(params.limit))
+        if (params?.search) query.set('search', params.search)
+        if (params?.status) query.set('status', params.status)
+        return request<Paginated<PlatformTeam>>(`/platform/teams?${query}`)
+      },
+      update: (id: string, data: { status?: AccountStatus; planName?: Team['plan'] }) =>
+        request<Pick<PlatformTeam, 'id' | 'status' | 'planName'>>(`/platform/teams/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    },
+    users: {
+      list: (params?: { page?: number; limit?: number; search?: string; status?: AccountStatus }) => {
+        const query = new URLSearchParams()
+        if (params?.page) query.set('page', String(params.page))
+        if (params?.limit) query.set('limit', String(params.limit))
+        if (params?.search) query.set('search', params.search)
+        if (params?.status) query.set('status', params.status)
+        return request<Paginated<PlatformUser>>(`/platform/users?${query}`)
+      },
+      update: (id: string, status: AccountStatus) =>
+        request<Pick<PlatformUser, 'id' | 'firstName' | 'lastName' | 'email' | 'status'>>(`/platform/users/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    },
   },
 }

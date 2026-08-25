@@ -19,7 +19,7 @@ export async function updateTeamHandler(request: FastifyRequest, reply: FastifyR
   const user = getAuthUser(request);
   const input = updateTeamSchema.parse(request.body);
   const team = await teamService.updateTeam(user.teamId, input);
-  return reply.send(successResponse(team, 'Team updated'));
+  return reply.send(successResponse(team, request.t('response.teamUpdated')));
 }
 
 export async function getMembersHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -32,7 +32,7 @@ export async function addMemberHandler(request: FastifyRequest, reply: FastifyRe
   const user = getAuthUser(request);
   const input = addMemberSchema.parse(request.body);
   const member = await teamService.addMember(user.teamId, input);
-  return reply.status(201).send(successResponse(member, 'Member added'));
+  return reply.status(201).send(successResponse(member, request.t('response.memberAdded')));
 }
 
 export async function updateMemberHandler(
@@ -47,7 +47,7 @@ export async function updateMemberHandler(
     input,
     user.userId,
   );
-  return reply.send(successResponse(member, 'Member updated'));
+  return reply.send(successResponse(member, request.t('response.memberUpdated')));
 }
 
 export async function removeMemberHandler(
@@ -56,12 +56,12 @@ export async function removeMemberHandler(
 ) {
   const user = getAuthUser(request);
   await teamService.removeMember(user.teamId, request.params.id, user.userId);
-  return reply.send(successResponse(null, 'Member removed'));
+  return reply.send(successResponse(null, request.t('response.memberRemoved')));
 }
 
 export async function upgradePlanHandler(request: FastifyRequest, reply: FastifyReply) {
   const user = getAuthUser(request);
   const input = upgradePlanSchema.parse(request.body);
   const result = await teamService.upgradePlan(user.teamId, input);
-  return reply.send(successResponse(result, 'Plan updated'));
+  return reply.send(successResponse(result, request.t('response.planUpdated')));
 }

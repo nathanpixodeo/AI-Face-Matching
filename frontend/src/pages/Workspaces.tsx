@@ -9,9 +9,11 @@ import { Badge } from '../components/ui/Badge'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { Plus, Power, PowerOff, Edit3, Trash2 } from 'lucide-react'
 import type { Workspace } from '../types'
+import { useI18n } from '../i18n/locale'
 
 export default function Workspaces() {
   const qc = useQueryClient()
+  const { t } = useI18n()
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [editItem, setEditItem] = useState<Workspace | null>(null)
@@ -51,41 +53,43 @@ export default function Workspaces() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="bankco-page-header">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Workspaces</h1>
-          <p className="text-sm text-gray-500 mt-1">Organize your face recognition projects</p>
+          <p className="bankco-eyebrow">{t('Project organization')}</p>
+          <h1 className="bankco-page-title">{t('Workspaces')}</h1>
+          <p className="bankco-page-description">{t('Organize your face recognition projects.')}</p>
         </div>
         <Button onClick={() => { setName(''); setNotes(''); setCreateOpen(true) }}>
-          <Plus className="w-4 h-4 mr-2" />Create Workspace
+          <Plus className="w-4 h-4 mr-2" />{t('Create Workspace')}
         </Button>
       </div>
 
       {isLoading ? <TableSkeleton /> : !workspaces?.length ? (
         <Card>
-          <CardContent className="p-12 text-center text-sm text-gray-500">
-            No workspaces yet. Create one to get started.
+          <CardContent className="p-12 text-center text-sm text-[#718096]">
+            {t('No workspaces yet. Create one to get started.')}
           </CardContent>
         </Card>
       ) : (
         <Card>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-[#edf2f7]">
             {workspaces.map(ws => (
-              <div key={ws._id} className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+              <div key={ws._id} className="flex items-center gap-4 p-5 transition-colors hover:bg-[#fafcfa]">
+                <div className="hidden h-10 w-1 rounded-full bg-primary-100 sm:block" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900">{ws.name}</p>
-                  {ws.notes && <p className="text-sm text-gray-500 truncate">{ws.notes}</p>}
+                  <p className="font-bankco-display font-semibold tracking-[-.02em] text-[#2d3748]">{ws.name}</p>
+                  {ws.notes && <p className="mt-1 truncate text-sm text-[#718096]">{ws.notes}</p>}
                 </div>
-                <Badge variant={ws.status === 'active' ? 'green' : 'gray'}>{ws.status}</Badge>
+                <Badge variant={ws.status === 'active' ? 'green' : 'gray'}>{t(ws.status.charAt(0).toUpperCase() + ws.status.slice(1))}</Badge>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => toggle.mutate(ws)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+                  <button aria-label={t('{{action}} {{name}}', { action: t(ws.status === 'active' ? 'Deactivate' : 'Activate'), name: ws.name })} onClick={() => toggle.mutate(ws)} className="bankco-icon-button h-8 w-8 border-0">
                     {ws.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                   </button>
-                  <button onClick={() => openEdit(ws)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+                  <button aria-label={t('Edit {{name}}', { name: ws.name })} onClick={() => openEdit(ws)} className="bankco-icon-button h-8 w-8 border-0">
                     <Edit3 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => remove.mutate(ws._id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50">
+                  <button aria-label={t('Delete {{name}}', { name: ws.name })} onClick={() => remove.mutate(ws._id)} className="bankco-icon-button h-8 w-8 border-0 hover:bg-danger-50 hover:text-danger-500">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -95,32 +99,32 @@ export default function Workspaces() {
         </Card>
       )}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Workspace">
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t('Create Workspace')}>
         <div className="space-y-4">
-          <Input label="Name" placeholder="Workspace name" value={name} onChange={e => setName(e.target.value)} />
+          <Input label={t('Name')} placeholder={t('Workspace name')} value={name} onChange={e => setName(e.target.value)} />
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Notes (optional)</label>
+            <label className="block text-sm font-medium text-[#4a5568]">{t('Notes (optional)')}</label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+              className="block w-full rounded-lg border border-[#e2e8f0] bg-white px-4 py-3 text-sm text-[#2d3748] focus:border-primary-500 focus:outline-none" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="secondary" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={() => create.mutate()} loading={create.isPending} disabled={!name.trim()}>Create</Button>
+            <Button variant="secondary" onClick={() => setCreateOpen(false)}>{t('Cancel')}</Button>
+            <Button onClick={() => create.mutate()} loading={create.isPending} disabled={!name.trim()}>{t('Create')}</Button>
           </div>
         </div>
       </Modal>
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Workspace">
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={t('Edit Workspace')}>
         <div className="space-y-4">
-          <Input label="Name" value={name} onChange={e => setName(e.target.value)} />
+          <Input label={t('Name')} value={name} onChange={e => setName(e.target.value)} />
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Notes (optional)</label>
+            <label className="block text-sm font-medium text-[#4a5568]">{t('Notes (optional)')}</label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+              className="block w-full rounded-lg border border-[#e2e8f0] bg-white px-4 py-3 text-sm text-[#2d3748] focus:border-primary-500 focus:outline-none" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="secondary" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={() => update.mutate()} loading={update.isPending}>Save</Button>
+            <Button variant="secondary" onClick={() => setEditOpen(false)}>{t('Cancel')}</Button>
+            <Button onClick={() => update.mutate()} loading={update.isPending}>{t('Save')}</Button>
           </div>
         </div>
       </Modal>

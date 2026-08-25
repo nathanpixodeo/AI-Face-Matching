@@ -54,6 +54,7 @@ export async function createTestUser(overrides: Record<string, unknown> = {}) {
       email: user.email,
       teamId: team._id.toString(),
       role: user.role,
+      isSuperadmin: user.isSuperadmin,
     },
     JWT_SECRET,
     { algorithm: 'HS256', expiresIn: '1h' },

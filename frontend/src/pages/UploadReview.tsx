@@ -7,8 +7,10 @@ import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { CardSkeleton } from '../components/ui/Skeleton'
 import { ArrowLeft, Check } from 'lucide-react'
+import { useI18n } from '../i18n/locale'
 
 function UploadReviewPage() {
+  const { t } = useI18n()
   const { batchId } = useParams<{ batchId: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -34,78 +36,76 @@ function UploadReviewPage() {
     },
   })
 
-  if (isLoading) return <div className="grid grid-cols-3 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>
+  if (isLoading) return <div className="grid grid-cols-3 gap-5"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>
 
   const allFaces = batch?.images?.flatMap(img => img.faces || []) || []
   const mapped = allFaces.filter(f => f.status === 'confirmed' || f.status === 'matched').length
   const unmatched = allFaces.filter(f => f.status === 'unmatched').length
 
   return (
-    <div className="space-y-6">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-        <ArrowLeft className="w-4 h-4" /> Back
-      </button>
-
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="bankco-page-header">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Review Face Mappings</h1>
-          <p className="text-sm text-gray-500 mt-1">Confirm or adjust detected face assignments</p>
+          <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-2 text-sm font-bold text-[#718096] transition-colors hover:text-primary-600"><ArrowLeft className="h-4 w-4" />{t('Back')}</button>
+          <p className="bankco-eyebrow">{t('Quality control')}</p>
+          <h1 className="bankco-page-title">{t('Review face mappings')}</h1>
+          <p className="bankco-page-description">{t('Confirm or adjust detected face assignments.')}</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="green">{mapped} mapped</Badge>
-          <Badge variant="orange">{unmatched} unmatched</Badge>
-          <Button onClick={() => submit.mutate()} loading={submit.isPending}>Save & Complete</Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge variant="green">{t('{{count}} mapped', { count: mapped })}</Badge>
+          <Badge variant="orange">{t('{{count}} unmatched', { count: unmatched })}</Badge>
+          <Button onClick={() => submit.mutate()} loading={submit.isPending}>{t('Save & Complete')}</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {allFaces.map(face => (
           <Card key={face._id} className={clsx(
             'overflow-hidden border-2 transition-all',
-            skipped.has(face._id) ? 'border-gray-200 opacity-50' :
-            face.status === 'confirmed' || assignments[face._id] ? 'border-success-500' :
-            face.status === 'unmatched' ? 'border-orange-400' : 'border-gray-200'
+            skipped.has(face._id) ? 'border-[#edf2f7] opacity-50' :
+            face.status === 'confirmed' || assignments[face._id] ? 'border-primary-300 shadow-[0_10px_20px_rgba(34,197,94,.08)]' :
+            face.status === 'unmatched' ? 'border-[#ffb6a5]' : 'border-[#edf2f7]'
           )}>
-            <div className="aspect-square bg-gray-100 relative">
+            <div className="relative aspect-square bg-[#edf2f7]">
               <img src={`/api/images/${face.image?._id}/file?crop=${face.bbox.x},${face.bbox.y},${face.bbox.width},${face.bbox.height}`}
                 alt="" className="w-full h-full object-cover" />
             </div>
-            <CardContent className="p-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-center gap-2 text-xs font-medium text-[#718096]">
                 <span>{Math.round(face.age)}y</span>
                 <span>{face.gender}</span>
                 <span>{Math.round(face.confidence * 100)}%</span>
               </div>
 
               {face.identity || assignments[face._id] ? (
-                <div className="text-xs font-medium text-success-600 flex items-center gap-1">
+                <div className="flex items-center gap-1 text-xs font-bold text-success-600">
                   <Check className="w-3 h-3" />
-                  {assignments[face._id] ? identities?.items?.find(i => i._id === assignments[face._id])?.name || 'Assigned' : face.identity?.name}
+                  {assignments[face._id] ? identities?.items?.find(i => i._id === assignments[face._id])?.name || t('Assigned') : face.identity?.name}
                 </div>
               ) : (
-                <div className="text-xs text-orange-500">No match found</div>
+                <div className="text-xs font-bold text-accent-500">{t('No match found')}</div>
               )}
 
               <div className="flex gap-1 pt-1">
                 {!assignments[face._id] && !skipped.has(face._id) && (
                   <select
-                    className="flex-1 text-xs rounded border border-gray-300 px-1 py-1"
+                    className="flex-1 rounded-lg border border-[#e2e8f0] bg-white px-2 py-2 text-xs font-medium text-[#4a5568] outline-none focus:border-primary-500"
                     value=""
                     onChange={e => {
                       if (e.target.value === 'skip') { setSkipped(prev => new Set(prev).add(face._id)) }
                       else if (e.target.value) { setAssignments(prev => ({ ...prev, [face._id]: e.target.value })) }
                     }}
                   >
-                    <option value="" disabled>Assign...</option>
-                    <option value="skip">Skip</option>
+                    <option value="" disabled>{t('Assign...')}</option>
+                    <option value="skip">{t('Skip')}</option>
                     {identities?.items?.map(id => (
                       <option key={id._id} value={id._id}>{id.name}</option>
                     ))}
                   </select>
                 )}
                 {skipped.has(face._id) && (
-                  <button onClick={() => setSkipped(prev => { const n = new Set(prev); n.delete(face._id); return n })} className="text-xs text-primary-600">
-                    Undo skip
+                  <button onClick={() => setSkipped(prev => { const n = new Set(prev); n.delete(face._id); return n })} className="text-xs font-bold text-primary-600">
+                    {t('Undo skip')}
                   </button>
                 )}
               </div>

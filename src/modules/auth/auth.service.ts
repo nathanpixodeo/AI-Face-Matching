@@ -26,6 +26,7 @@ interface AuthResult {
     lastName: string;
     email: string;
     role: string;
+    isSuperadmin: boolean;
   };
   team: {
     id: string;
@@ -74,6 +75,7 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
     email: user.email,
     teamId: team._id.toString(),
     role: user.role,
+    isSuperadmin: user.isSuperadmin,
   });
 
   return {
@@ -84,6 +86,7 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      isSuperadmin: user.isSuperadmin,
     },
     team: {
       id: team._id.toString(),
@@ -116,6 +119,7 @@ export async function login(input: LoginInput): Promise<AuthResult> {
     email: user.email,
     teamId: team._id.toString(),
     role: user.role,
+    isSuperadmin: user.isSuperadmin,
   });
 
   return {
@@ -126,6 +130,7 @@ export async function login(input: LoginInput): Promise<AuthResult> {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      isSuperadmin: user.isSuperadmin,
     },
     team: {
       id: team._id.toString(),

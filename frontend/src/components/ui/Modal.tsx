@@ -23,15 +23,15 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
 
   return (
     <div ref={overlay} className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={e => { if (e.target === overlay.current) onClose() }}>
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="fixed inset-0 bg-[#1d1e24]/45 backdrop-blur-sm" />
       <div className={clsx(
-        'relative bg-white rounded-2xl shadow-xl w-full animate-in fade-in zoom-in-95',
+        'relative w-full overflow-hidden rounded-xl bg-white shadow-[0_28px_70px_rgba(42,49,60,.22)]',
         { 'max-w-sm': size === 'sm', 'max-w-lg': size === 'md', 'max-w-2xl': size === 'lg' }
       )}>
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-            <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <div className="flex items-center justify-between border-b border-[#edf2f7] px-6 py-5">
+            <h2 className="font-bankco-display text-lg font-semibold tracking-[-.03em] text-[#1a202c]">{title}</h2>
+            <button onClick={onClose} className="bankco-icon-button h-8 w-8">
               <X className="w-5 h-5" />
             </button>
           </div>

@@ -8,7 +8,7 @@ export async function createWorkspaceHandler(request: FastifyRequest, reply: Fas
   const user = getAuthUser(request);
   const input = createWorkspaceSchema.parse(request.body);
   const workspace = await workspaceService.createWorkspace(user.teamId, input);
-  return reply.status(201).send(successResponse(workspace, 'Workspace created'));
+  return reply.status(201).send(successResponse(workspace, request.t('response.workspaceCreated')));
 }
 
 export async function listWorkspacesHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -34,7 +34,7 @@ export async function updateWorkspaceHandler(
   const user = getAuthUser(request);
   const input = updateWorkspaceSchema.parse(request.body);
   const workspace = await workspaceService.updateWorkspace(user.teamId, request.params.id, input);
-  return reply.send(successResponse(workspace, 'Workspace updated'));
+  return reply.send(successResponse(workspace, request.t('response.workspaceUpdated')));
 }
 
 export async function deleteWorkspaceHandler(
@@ -43,5 +43,5 @@ export async function deleteWorkspaceHandler(
 ) {
   const user = getAuthUser(request);
   await workspaceService.deleteWorkspace(user.teamId, request.params.id);
-  return reply.send(successResponse(null, 'Workspace deleted'));
+  return reply.send(successResponse(null, request.t('response.workspaceDeleted')));
 }

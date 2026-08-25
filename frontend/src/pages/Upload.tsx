@@ -9,10 +9,12 @@ import { ProgressBar } from '../components/ui/ProgressBar'
 import { useToast } from '../contexts/ToastContext'
 import { Upload, X, ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react'
 import { clsx } from 'clsx'
+import { useI18n } from '../i18n/locale'
 
 export default function UploadPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { t } = useI18n()
   const [files, setFiles] = useState<File[]>([])
   const [dragging, setDragging] = useState(false)
   const [batchId, setBatchId] = useState<string | null>(null)
@@ -33,10 +35,10 @@ export default function UploadPage() {
     mutationFn: () => api.uploads.upload(files),
     onSuccess: (data) => {
       setBatchId(data._id)
-      toast('success', `${files.length} file${files.length > 1 ? 's' : ''} uploaded successfully`)
+      toast('success', t('{{count}} files uploaded successfully', { count: files.length }))
     },
     onError: (err: Error) => {
-      toast('error', err.message || 'Upload failed')
+      toast('error', err.message || t('Upload failed'))
     },
   })
 
@@ -44,9 +46,9 @@ export default function UploadPage() {
     e.preventDefault()
     setDragging(false)
     const dropped = Array.from(e.dataTransfer.files).filter(f => ['image/jpeg', 'image/png', 'image/webp', 'image/bmp'].includes(f.type))
-    if (!dropped.length) { toast('error', 'Unsupported file type. Accepted: JPG, PNG, WEBP, BMP'); return }
+    if (!dropped.length) { toast('error', t('Unsupported file type. Accepted: JPG, PNG, WEBP, BMP')); return }
     setFiles(prev => [...prev, ...dropped])
-  }, [toast])
+  }, [t, toast])
 
   const removeFile = (index: number) => setFiles(prev => prev.filter((_, i) => i !== index))
 
@@ -57,65 +59,65 @@ export default function UploadPage() {
   } : null
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back
-      </button>
-
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Upload Images</h1>
-        <p className="text-sm text-gray-500 mt-1">Drag and drop images to detect and map faces</p>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <div className="bankco-page-header">
+        <div>
+          <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-2 text-sm font-bold text-[#718096] transition-colors hover:text-primary-600"><ArrowLeft className="h-4 w-4" />{t('Back')}</button>
+          <p className="bankco-eyebrow">{t('Image intake')}</p>
+          <h1 className="bankco-page-title">{t('Upload images')}</h1>
+          <p className="bankco-page-description">{t('Add a batch for face detection and review.')}</p>
+        </div>
+        {!batchId && <div className="hidden rounded-lg bg-[#f7fafc] px-4 py-3 text-right sm:block"><p className="text-xs font-bold uppercase tracking-[.08em] text-[#718096]">{t('Accepted files')}</p><p className="mt-1 text-sm font-bold text-[#4a5568]">JPG · PNG · WEBP · BMP</p></div>}
       </div>
 
       {!batchId && (
-        <Card>
-          <CardContent className="p-8">
-            <div
-              onDragOver={e => { e.preventDefault(); setDragging(true) }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={onDrop}
-              onClick={() => inputRef.current?.click()}
-              className={clsx(
-                'border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all',
-                dragging ? 'border-primary-400 bg-primary-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50/50'
-              )}
-            >
-              <input
-                ref={inputRef}
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,image/webp,image/bmp"
-                className="hidden"
-                onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])])}
-              />
-              <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-900">Drop images here</p>
-              <p className="text-sm text-gray-500 mt-1">or click to browse · JPG, PNG, WEBP, BMP</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div
+          onDragOver={e => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+          onClick={() => inputRef.current?.click()}
+          data-active={dragging}
+          className={clsx(
+            'bankco-dropzone cursor-pointer px-6 py-16 text-center transition-colors sm:py-20',
+            dragging ? 'border-primary-500' : 'hover:border-primary-400'
+          )}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/bmp"
+            className="hidden"
+            onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])])}
+          />
+          <div className="relative z-10 mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-white text-primary-600 shadow-[0_10px_24px_rgba(42,49,60,.08)]">
+            <Upload className="h-6 w-6" />
+          </div>
+          <p className="relative z-10 font-bankco-display text-xl font-semibold tracking-[-.035em] text-[#1a202c]">{t('Drop images here')}</p>
+          <p className="relative z-10 mt-2 text-sm text-[#718096]">{t('Browse files or drop a batch. JPG, PNG, WEBP, BMP.')}</p>
+        </div>
       )}
 
       {files.length > 0 && !batchId && (
         <Card>
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="space-y-5 p-5 sm:p-6">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{files.length} file{files.length > 1 ? 's' : ''} selected</h3>
+              <div><p className="bankco-eyebrow">{t('Ready to process')}</p><h3 className="font-bankco-display text-lg font-semibold tracking-[-.03em] text-[#1a202c]">{t('{{count}} files selected', { count: files.length })}</h3></div>
               <Button onClick={() => uploadMutation.mutate()} loading={uploadMutation.isPending}>
-                Upload All
+                {t('Upload All')}
               </Button>
             </div>
-            <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+            <div className="max-h-64 divide-y divide-[#edf2f7] overflow-y-auto rounded-lg border border-[#edf2f7]">
               {files.map((f, i) => (
-                <div key={i} className="flex items-center gap-3 py-2">
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                <div key={i} className="flex items-center gap-3 px-3 py-3 transition-colors hover:bg-[#fafcfa]">
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#edf2f7]">
                     <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{f.name}</p>
-                    <p className="text-xs text-gray-500">{(f.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p className="truncate text-sm font-bold text-[#2d3748]">{f.name}</p>
+                    <p className="text-xs text-[#718096]">{(f.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
-                  <button onClick={() => removeFile(i)} className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                  <button aria-label={t('Remove {{name}}', { name: f.name })} title={t('Remove file')} onClick={() => removeFile(i)} className="bankco-icon-button h-8 w-8 border-0 hover:bg-danger-50 hover:text-danger-500">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -127,41 +129,41 @@ export default function UploadPage() {
 
       {batchId && (
         <Card>
-          <CardContent className="p-6 space-y-4">
-            <h3 className="font-semibold">Processing</h3>
+          <CardContent className="space-y-5 p-5 sm:p-6">
+            <div><p className="bankco-eyebrow">{t('Batch status')}</p><h3 className="font-bankco-display text-lg font-semibold tracking-[-.03em] text-[#1a202c]">{t('Processing')}</h3></div>
 
             {progressErr ? (
               <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50">
                 <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                <p className="text-sm text-red-600 flex-1">Failed to load progress</p>
-                <Button variant="ghost" size="sm" onClick={() => retryProgress()}><RefreshCw className="w-4 h-4 mr-1" />Retry</Button>
+                <p className="text-sm text-red-600 flex-1">{t('Failed to load progress')}</p>
+                <Button variant="ghost" size="sm" onClick={() => retryProgress()}><RefreshCw className="w-4 h-4 mr-1" />{t('Retry')}</Button>
               </div>
             ) : (
               <ProgressBar value={progress?.pct ?? 0} showLabel size="md" variant="primary" />
             )}
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">{progress?.processed ?? 0} / {progress?.total ?? 0} processed</span>
-              {batch?.status === 'completed' && <Badge variant="green">Complete</Badge>}
-              {batch?.status === 'processing' && <Badge variant="yellow">Processing</Badge>}
-              {batch?.status === 'failed' && <Badge variant="red">Failed</Badge>}
-              {batch?.status === 'review' && <Badge variant="orange">Ready for Review</Badge>}
+              <span className="text-sm text-gray-500">{t('{{processed}} / {{total}} processed', { processed: progress?.processed ?? 0, total: progress?.total ?? 0 })}</span>
+              {batch?.status === 'completed' && <Badge variant="green">{t('Complete')}</Badge>}
+              {batch?.status === 'processing' && <Badge variant="yellow">{t('Processing')}</Badge>}
+              {batch?.status === 'failed' && <Badge variant="red">{t('Failed')}</Badge>}
+              {batch?.status === 'review' && <Badge variant="orange">{t('Ready for Review')}</Badge>}
             </div>
 
             {batch?.status === 'review' && (
               <Button className="w-full" onClick={() => navigate(`/upload/${batchId}/review`)}>
-                Review Mappings
+                {t('Review Mappings')}
               </Button>
             )}
 
             {(batch?.status === 'completed' || batch?.status === 'failed') && (
               <div className="flex gap-3">
                 <Button variant="secondary" className="flex-1" onClick={() => navigate('/')}>
-                  Back to Dashboard
+                  {t('Back to Dashboard')}
                 </Button>
                 {batch?.status === 'failed' && (
                   <Button className="flex-1" onClick={() => { setBatchId(null); setFiles([]) }}>
-                    Try Again
+                    {t('Try Again')}
                   </Button>
                 )}
               </div>

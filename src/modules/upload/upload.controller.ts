@@ -8,7 +8,7 @@ export async function uploadHandler(request: FastifyRequest, reply: FastifyReply
   const user = getAuthUser(request);
   const files = request.files();
   const result = await uploadService.uploadImages(user.teamId, user.userId, files);
-  return reply.status(201).send(successResponse(result, 'Upload started'));
+  return reply.status(201).send(successResponse(result, request.t('response.uploadStarted')));
 }
 
 export async function listBatchesHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -43,7 +43,7 @@ export async function submitReviewHandler(
   const user = getAuthUser(request);
   const input = reviewMappingSchema.parse(request.body);
   const result = await uploadService.submitReview(user.teamId, request.params.id, input);
-  return reply.send(successResponse(result, 'Review submitted'));
+  return reply.send(successResponse(result, request.t('response.reviewSubmitted')));
 }
 
 export async function progressHandler(

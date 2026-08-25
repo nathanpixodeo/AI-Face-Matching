@@ -11,17 +11,17 @@ export function Button({ variant = 'primary', size = 'md', loading, className, c
   return (
     <button
       className={clsx(
-        'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-bold tracking-normal transition-[background-color,border-color,color,box-shadow] duration-200 focus:outline-none focus:ring-4 focus:ring-primary-100 disabled:pointer-events-none disabled:opacity-50',
         {
-          'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500': variant === 'primary',
-          'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-500': variant === 'secondary',
-          'bg-danger-500 text-white hover:bg-danger-600 focus:ring-danger-500': variant === 'danger',
-          'text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-500': variant === 'ghost',
+          'bg-primary-500 text-white shadow-[0_8px_16px_rgba(34,197,94,.18)] hover:bg-primary-600': variant === 'primary',
+          'border border-[#e2e8f0] bg-white text-[#4a5568] hover:border-[#b7ffd1] hover:bg-[#f7fff9] hover:text-[#1a202c]': variant === 'secondary',
+          'bg-danger-500 text-white shadow-[0_8px_16px_rgba(255,71,71,.14)] hover:bg-danger-600': variant === 'danger',
+          'text-[#718096] hover:bg-[#f7fafc] hover:text-[#1a202c]': variant === 'ghost',
         },
         {
-          'px-2.5 py-1.5 text-xs': size === 'sm',
-          'px-4 py-2 text-sm': size === 'md',
-          'px-6 py-3 text-base': size === 'lg',
+          'min-h-8 px-3 py-1 text-xs': size === 'sm',
+          'min-h-11 px-4 py-2.5 text-sm': size === 'md',
+          'min-h-14 px-6 py-3.5 text-base': size === 'lg',
         },
         className
       )}

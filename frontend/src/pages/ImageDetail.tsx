@@ -6,8 +6,10 @@ import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { CardSkeleton } from '../components/ui/Skeleton'
 import { ArrowLeft, Trash2 } from 'lucide-react'
+import { useI18n } from '../i18n/locale'
 
 export default function ImageDetail() {
+  const { locale, t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -23,76 +25,70 @@ export default function ImageDetail() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['images'] }); navigate('/images') },
   })
 
-  if (isLoading) return <div className="space-y-6"><CardSkeleton /><CardSkeleton /></div>
+  if (isLoading) return <div className="space-y-5"><CardSkeleton /><CardSkeleton /></div>
   if (!image) return null
 
   return (
-    <div className="space-y-6">
-      <button onClick={() => navigate('/images')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-        <ArrowLeft className="w-4 h-4" /> Back to Images
-      </button>
+    <div className="space-y-8">
+      <div className="bankco-page-header">
+        <div>
+          <button onClick={() => navigate('/images')} className="mb-4 flex items-center gap-2 text-sm font-bold text-[#718096] transition-colors hover:text-primary-600"><ArrowLeft className="h-4 w-4" />{t('Back to images')}</button>
+          <p className="bankco-eyebrow">{t('Image detail')}</p>
+          <h1 className="bankco-page-title truncate">{image.originalName}</h1>
+          <p className="bankco-page-description">{t('Inspect detected faces, processing status, and file metadata.')}</p>
+        </div>
+        <Badge variant={image.status === 'completed' ? 'green' : image.status === 'processing' ? 'yellow' : 'red'}>{t(image.status.charAt(0).toUpperCase() + image.status.slice(1))}</Badge>
+      </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card className="overflow-hidden">
-            <div className="bg-black relative">
-              <img src={`/api/images/${image._id}/file`} alt={image.originalName} className="w-full max-h-[70vh] object-contain mx-auto" />
+            <div className="relative bg-[#1a202c] p-3 sm:p-5">
+              <img src={`/api/images/${image._id}/file`} alt={image.originalName} className="mx-auto max-h-[70vh] w-full rounded-lg object-contain" />
               {image.faces?.map((face, i) => (
                 <div
                   key={i}
-                  className="absolute border-2 border-primary-500 bg-primary-500/20 cursor-pointer hover:bg-primary-500/30 transition-colors"
+                  className="absolute cursor-pointer border-2 border-primary-500 bg-primary-500/20 transition-colors hover:bg-primary-500/30"
                   style={{
                     left: `${face.bbox.x}%`,
                     top: `${face.bbox.y}%`,
                     width: `${face.bbox.width}%`,
                     height: `${face.bbox.height}%`,
                   }}
-                  title={`${face.identity?.name || 'Unmatched'} (${Math.round(face.confidence * 100)}%)`}
+                  title={`${face.identity?.name || t('Unmatched')} (${Math.round(face.confidence * 100)}%)`}
                 />
               ))}
             </div>
           </Card>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Card>
-            <CardContent className="p-5 space-y-4">
-              <h2 className="font-semibold text-lg">Image Info</h2>
-              <div className="space-y-2 text-sm">
-                <div><span className="text-gray-500">Filename:</span> <span className="text-gray-900">{image.originalName}</span></div>
-                <div><span className="text-gray-500">Size:</span> <span className="text-gray-900">{(image.size / 1024 / 1024).toFixed(2)} MB</span></div>
-                <div><span className="text-gray-500">Dimensions:</span> <span className="text-gray-900">{image.width}×{image.height}</span></div>
-                <div><span className="text-gray-500">Uploaded:</span> <span className="text-gray-900">{new Date(image.createdAt).toLocaleDateString()}</span></div>
-                <div><span className="text-gray-500">Status:</span> <Badge variant={image.status === 'completed' ? 'green' : image.status === 'processing' ? 'yellow' : 'red'}>{image.status}</Badge></div>
-                <div><span className="text-gray-500">Faces:</span> <span className="text-gray-900">{image.faceCount}</span></div>
-              </div>
-              <Button variant="danger" className="w-full" onClick={() => remove.mutate()} loading={remove.isPending}>
-                <Trash2 className="w-4 h-4 mr-2" />Delete Image
-              </Button>
+            <CardContent className="space-y-5 p-5">
+              <div><p className="bankco-eyebrow">{t('File metadata')}</p><h2 className="font-bankco-display text-lg font-semibold tracking-[-.03em] text-[#1a202c]">{t('Image info')}</h2></div>
+              <dl className="space-y-3 text-sm">
+                <div className="flex items-start justify-between gap-4"><dt className="text-[#718096]">{t('Filename')}</dt><dd className="max-w-[60%] truncate text-right font-bold text-[#2d3748]">{image.originalName}</dd></div>
+                <div className="flex items-center justify-between gap-4"><dt className="text-[#718096]">{t('Size')}</dt><dd className="font-bold text-[#2d3748]">{(image.size / 1024 / 1024).toFixed(2)} MB</dd></div>
+                <div className="flex items-center justify-between gap-4"><dt className="text-[#718096]">{t('Dimensions')}</dt><dd className="font-bold text-[#2d3748]">{image.width}×{image.height}</dd></div>
+                <div className="flex items-center justify-between gap-4"><dt className="text-[#718096]">{t('Uploaded')}</dt><dd className="font-bold text-[#2d3748]">{new Date(image.createdAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : locale === 'fr' ? 'fr-FR' : 'en-US')}</dd></div>
+                <div className="flex items-center justify-between gap-4"><dt className="text-[#718096]">{t('Faces')}</dt><dd className="font-bold text-[#2d3748]">{image.faceCount}</dd></div>
+              </dl>
+              <Button variant="danger" className="w-full" onClick={() => remove.mutate()} loading={remove.isPending}><Trash2 className="h-4 w-4" />{t('Delete image')}</Button>
             </CardContent>
           </Card>
 
-          {image.faces?.length ? (
-            <Card>
-              <CardContent className="p-5 space-y-3">
-                <h2 className="font-semibold">Detected Faces</h2>
-                {image.faces.map((face, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
-                    <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0">
-                      {face.image && <img src={`/api/images/${face.image._id}/file`} alt="" className="w-full h-full object-cover" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{face.identity?.name || 'Unmatched'}</p>
-                      <p className="text-xs text-gray-500">{Math.round(face.age)}y · {face.gender}</p>
-                    </div>
-                    <Badge variant={face.status === 'confirmed' ? 'green' : face.status === 'matched' ? 'blue' : 'orange'}>
-                      {face.status}
-                    </Badge>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ) : null}
+          {image.faces?.length ? <Card>
+            <CardContent className="space-y-3 p-5">
+              <div><p className="bankco-eyebrow">{t('Detection output')}</p><h2 className="font-bankco-display font-semibold tracking-[-.03em] text-[#1a202c]">{t('Detected faces')}</h2></div>
+              <div className="divide-y divide-[#edf2f7]">
+                {image.faces.map((face, i) => <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#edf2f7]">{face.image && <img src={`/api/images/${face.image._id}/file`} alt="" className="h-full w-full object-cover" />}</div>
+                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-[#2d3748]">{face.identity?.name || t('Unmatched')}</p><p className="mt-0.5 text-xs text-[#718096]">{Math.round(face.age)}y · {face.gender}</p></div>
+                  <Badge variant={face.status === 'confirmed' ? 'green' : face.status === 'matched' ? 'blue' : 'orange'}>{t(face.status.charAt(0).toUpperCase() + face.status.slice(1))}</Badge>
+                </div>)}
+              </div>
+            </CardContent>
+          </Card> : null}
         </div>
       </div>
     </div>

@@ -4,8 +4,10 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { api } from '../lib/api'
 import { Mail, ArrowLeft } from 'lucide-react'
+import { useI18n } from '../i18n/locale'
 
 export default function ForgotPassword() {
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -19,7 +21,7 @@ export default function ForgotPassword() {
       await api.auth.forgotPassword(email)
       setSent(true)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Request failed')
+      setError(err instanceof Error ? err.message : t('Request failed'))
     } finally {
       setLoading(false)
     }
@@ -27,14 +29,14 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <div className="text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mx-auto">
+      <div className="space-y-4 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-[#d9fbe6] text-primary-600">
           <Mail className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
-        <p className="text-sm text-gray-500">If an account with that email exists, we've sent a reset link.</p>
-        <Link to="/login" className="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-500">
-          <ArrowLeft className="w-4 h-4" /> Back to login
+        <h1 className="font-bankco-display text-3xl font-semibold tracking-[-.045em] text-[#1a202c]">{t('Check your email.')}</h1>
+        <p className="text-base leading-7 text-[#718096]">{t("If an account with that email exists, we've sent a reset link.")}</p>
+        <Link to="/login" className="inline-flex items-center gap-1 text-sm font-bold text-primary-600 hover:text-primary-700">
+          <ArrowLeft className="w-4 h-4" /> {t('Back to login')}
         </Link>
       </div>
     )
@@ -42,15 +44,16 @@ export default function ForgotPassword() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="text-center mb-2">
-        <h1 className="text-2xl font-bold text-gray-900">Forgot password</h1>
-        <p className="text-sm text-gray-500 mt-1">Enter your email and we'll send you a reset link</p>
+      <div className="mb-8 text-center">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[.13em] text-primary-600">{t('Account recovery')}</p>
+        <h1 className="font-bankco-display text-3xl font-semibold tracking-[-.045em] text-[#1a202c]">{t('Forgot password?')}</h1>
+        <p className="mt-2 text-base font-medium text-[#718096]">{t("Enter your email and we'll send a reset link")}</p>
       </div>
 
-      {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{error}</div>}
+      {error && <div className="rounded-lg border border-[#fcDEDE] bg-[#fff7f7] px-4 py-3 text-sm font-medium text-[#dd3333]">{error}</div>}
 
       <Input
-        label="Email"
+        label={t('Email')}
         type="email"
         placeholder="you@example.com"
         value={email}
@@ -59,10 +62,10 @@ export default function ForgotPassword() {
         required
       />
 
-      <Button type="submit" className="w-full" loading={loading}>Send reset link</Button>
+      <Button type="submit" className="w-full" loading={loading}>{t('Send reset link')}</Button>
 
-      <p className="text-center text-sm text-gray-500">
-        <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">Back to login</Link>
+      <p className="text-center text-sm text-[#718096]">
+        <Link to="/login" className="font-bold text-primary-600 hover:text-primary-700">{t('Back to login')}</Link>
       </p>
     </form>
   )

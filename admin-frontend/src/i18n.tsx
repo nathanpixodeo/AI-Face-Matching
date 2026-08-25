@@ -10,7 +10,7 @@ export const localeLabels: Record<Locale, string> = {
 
 const copy = {
   en: {
-    platform: 'Platform control', signIn: 'Sign in to platform', email: 'Email address', password: 'Password', signInButton: 'Sign in',
+    platform: 'Platform control', language: 'Language', signIn: 'Sign in to platform', email: 'Email address', password: 'Password', signInButton: 'Sign in',
     secureAccess: 'Restricted to verified platform administrators.', invalidAdmin: 'This account does not have platform administrator access.',
     overview: 'Overview', teams: 'Teams', users: 'Users', signOut: 'Sign out', totalTeams: 'Teams', totalUsers: 'Users',
     activeUsers: 'Active users', suspendedUsers: 'Suspended users', identities: 'Identities', images: 'Images', platformHealth: 'Platform health', accessGuard: 'Access guard', superadmins: 'Platform administrators',
@@ -20,7 +20,7 @@ const copy = {
     error: 'Unable to load platform data.',
   },
   vi: {
-    platform: 'Quản trị nền tảng', signIn: 'Đăng nhập quản trị', email: 'Địa chỉ email', password: 'Mật khẩu', signInButton: 'Đăng nhập',
+    platform: 'Quản trị nền tảng', language: 'Ngôn ngữ', signIn: 'Đăng nhập quản trị', email: 'Địa chỉ email', password: 'Mật khẩu', signInButton: 'Đăng nhập',
     secureAccess: 'Chỉ dành cho quản trị viên nền tảng đã xác thực.', invalidAdmin: 'Tài khoản này không có quyền quản trị nền tảng.',
     overview: 'Tổng quan', teams: 'Nhóm', users: 'Người dùng', signOut: 'Đăng xuất', totalTeams: 'Nhóm', totalUsers: 'Người dùng',
     activeUsers: 'Người dùng hoạt động', suspendedUsers: 'Người dùng bị khóa', identities: 'Danh tính', images: 'Hình ảnh', platformHealth: 'Tình trạng nền tảng', accessGuard: 'Kiểm soát truy cập', superadmins: 'Quản trị viên nền tảng',
@@ -30,7 +30,7 @@ const copy = {
     error: 'Không thể tải dữ liệu nền tảng.',
   },
   fr: {
-    platform: 'Contrôle de plateforme', signIn: 'Connexion à la plateforme', email: 'Adresse e-mail', password: 'Mot de passe', signInButton: 'Se connecter',
+    platform: 'Contrôle de plateforme', language: 'Langue', signIn: 'Connexion à la plateforme', email: 'Adresse e-mail', password: 'Mot de passe', signInButton: 'Se connecter',
     secureAccess: 'Réservé aux administrateurs de plateforme vérifiés.', invalidAdmin: 'Ce compte ne peut pas administrer la plateforme.',
     overview: 'Vue d’ensemble', teams: 'Équipes', users: 'Utilisateurs', signOut: 'Se déconnecter', totalTeams: 'Équipes', totalUsers: 'Utilisateurs',
     activeUsers: 'Utilisateurs actifs', suspendedUsers: 'Utilisateurs suspendus', identities: 'Identités', images: 'Images', platformHealth: 'État de la plateforme', accessGuard: 'Contrôle d’accès', superadmins: 'Administrateurs de plateforme',

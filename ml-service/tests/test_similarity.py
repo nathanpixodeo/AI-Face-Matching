@@ -1,4 +1,5 @@
 import pytest
+
 from app.utils.similarity import cosine_distance, distance_to_percent, is_match
 
 

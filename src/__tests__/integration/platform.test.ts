@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { FastifyInstance } from 'fastify';
 import { buildServer } from '../../server';
-import { createTestUser, JWT_SECRET } from '../helpers/fixtures';
+import { createTestUser, JWT_SECRET, seedPlan } from '../helpers/fixtures';
 import { User } from '../../models/user.model';
 
 process.env.JWT_SECRET = JWT_SECRET;
@@ -66,6 +66,7 @@ describe('Platform integration', () => {
     });
     expect(blockedTeamRoute.statusCode).toBe(403);
 
+    await seedPlan('pro');
     const restoredTeam = await app.inject({
       method: 'PUT',
       url: `/api/platform/teams/${team._id.toString()}`,

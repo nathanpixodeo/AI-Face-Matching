@@ -1,16 +1,17 @@
 import { Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { env } from '../../config/env';
 import { Plan } from '../../models/plan.model';
 import { Team } from '../../models/team.model';
 import { User } from '../../models/user.model';
 import { Identity } from '../../models/identity.model';
 
-const JWT_SECRET = 'test-secret-minimum-16-chars';
+const JWT_SECRET = env.JWT_SECRET;
 
-export async function seedFreePlan() {
+export async function seedPlan(name: 'free' | 'pro' | 'enterprise') {
   return Plan.create({
-    name: 'free',
+    name,
     limits: {
       maxIdentities: 50,
       maxImages: 500,
@@ -23,6 +24,10 @@ export async function seedFreePlan() {
     price: 0,
     active: true,
   });
+}
+
+export function seedFreePlan() {
+  return seedPlan('free');
 }
 
 export async function createTestUser(overrides: Record<string, unknown> = {}) {

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.models.schemas import DetectResponse
 from app.services.face_service import face_service
@@ -7,7 +9,7 @@ router = APIRouter(tags=["detection"])
 
 
 @router.post("/detect", response_model=DetectResponse)
-async def detect_faces(file: UploadFile = File(...)):
+async def detect_faces(file: Annotated[UploadFile, File(...)]):
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(400, "File must be an image")
 

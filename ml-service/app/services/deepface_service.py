@@ -6,7 +6,6 @@ for face detection, embedding extraction, and age/gender analysis.
 """
 
 import logging
-from typing import Optional
 
 import numpy as np
 
@@ -39,12 +38,12 @@ class DeepFaceService:
                     enforce_detection=False,
                 )
                 self._models_warmed.add("Facenet512")
-            except Exception:
-                pass
+            except Exception as e:  # noqa: BLE001 - optional model warmup must not block service startup.
+                logger.debug("DeepFace warmup skipped: %s", e)
 
             self._loaded = True
             logger.info("DeepFace service ready (Facenet512 + RetinaFace)")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - DeepFace exposes backend-specific runtime errors.
             logger.error("Failed to initialize DeepFace: %s", e)
             self._loaded = False
 
@@ -79,13 +78,13 @@ class DeepFaceService:
                     "landmarks": face_obj.get("landmarks", {}),
                 })
             return faces
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - malformed input and detector backends have no shared error base.
             logger.error("DeepFace detection failed: %s", e)
             return []
 
     def get_embedding(
         self, img: np.ndarray, model_name: str = "Facenet512"
-    ) -> Optional[list[float]]:
+    ) -> list[float] | None:
         if not self._loaded:
             return None
 
@@ -104,11 +103,11 @@ class DeepFaceService:
                 embedding = results[0].get("embedding", [])
                 return embedding
             return None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - embedding fallback must absorb backend-specific errors.
             logger.error("DeepFace embedding failed (%s): %s", model_name, e)
             return None
 
-    def get_embedding_with_fallback(self, img: np.ndarray) -> Optional[tuple[list[float], str]]:
+    def get_embedding_with_fallback(self, img: np.ndarray) -> tuple[list[float], str] | None:
         embedding = self.get_embedding(img, "Facenet512")
         if embedding:
             return embedding, "deepface-facenet512"
@@ -142,7 +141,7 @@ class DeepFaceService:
                     "gender_confidence": round(gender_confidence, 3),
                     "age": result.get("age", 0),
                 }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - demographic analysis is optional and must not fail matching.
             logger.error("DeepFace analysis failed: %s", e)
 
         return {"gender": "unknown", "gender_confidence": 0, "age": 0}

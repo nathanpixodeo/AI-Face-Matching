@@ -11,7 +11,6 @@ Model weights are downloaded on first use to the configured model_dir.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
@@ -69,7 +68,7 @@ class AdaFaceService:
                 self._model_info["filename"],
                 providers,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - ONNX Runtime and optional providers expose no shared error base.
             logger.error("Failed to load AdaFace model: %s", e)
             self._loaded = False
 
@@ -82,10 +81,10 @@ class AdaFaceService:
             target_path.parent.mkdir(parents=True, exist_ok=True)
             urllib.request.urlretrieve(url, str(target_path))
             logger.info("Model downloaded to %s", target_path)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - network and filesystem failures are logged and keep fallback available.
             logger.error("Failed to download AdaFace model: %s", e)
 
-    def get_embedding(self, face_img: np.ndarray) -> Optional[list[float]]:
+    def get_embedding(self, face_img: np.ndarray) -> list[float] | None:
         if not self._loaded or self._session is None:
             return None
 
@@ -114,7 +113,7 @@ class AdaFaceService:
                 embedding = embedding / norm
 
             return embedding.tolist()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - inference backend errors must fall back to DeepFace.
             logger.error("AdaFace embedding extraction failed: %s", e)
             return None
 

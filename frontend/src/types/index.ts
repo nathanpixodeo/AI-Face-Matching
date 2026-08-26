@@ -102,9 +102,17 @@ export interface BatchProgress {
 }
 
 export interface MatchResult {
-  identity: Identity
+  identity: Pick<Identity, '_id' | 'name' | 'description'>
   similarity: number
-  face?: Face
+}
+
+export interface MatchResponse {
+  query: {
+    bbox: { x: number; y: number; width: number; height: number }
+    age: number
+    gender: string
+  } | null
+  matches: MatchResult[]
 }
 
 export interface Workspace {

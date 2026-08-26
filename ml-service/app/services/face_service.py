@@ -7,7 +7,6 @@ Embedding: try AdaFace first, fall back to DeepFace Facenet512.
 """
 
 import logging
-from typing import Optional
 
 import numpy as np
 
@@ -15,8 +14,8 @@ from app.models.schemas import DetectedFace
 from app.services.adaface_service import adaface_service
 from app.services.deepface_service import deepface_service
 from app.utils.image import (
-    crop_face,
     calculate_image_quality,
+    crop_face,
     load_image_from_bytes,
     resize_if_needed,
 )
@@ -117,7 +116,7 @@ class FaceService:
 
     def _get_embedding_with_fallback(
         self, face_img: np.ndarray
-    ) -> tuple[Optional[list[float]], str]:
+    ) -> tuple[list[float] | None, str]:
         if adaface_service.is_loaded:
             embedding = adaface_service.get_embedding(face_img)
             if embedding:

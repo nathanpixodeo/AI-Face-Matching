@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel
-from typing import Optional
 
 
 class BoundingBox(BaseModel):
@@ -12,11 +12,11 @@ class BoundingBox(BaseModel):
 class DetectedFace(BaseModel):
     bbox: BoundingBox
     confidence: float
-    embedding: Optional[list[float]] = None
-    gender: Optional[str] = None
-    gender_confidence: Optional[float] = None
-    age: Optional[float] = None
-    quality_score: Optional[float] = None
+    embedding: list[float] | None = None
+    gender: str | None = None
+    gender_confidence: float | None = None
+    age: float | None = None
+    quality_score: float | None = None
     model_used: str = "adaface"
 
 
@@ -41,7 +41,7 @@ class BatchEmbedItem(BaseModel):
     index: int
     faces_count: int
     faces: list[DetectedFace]
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class BatchEmbedResponse(BaseModel):

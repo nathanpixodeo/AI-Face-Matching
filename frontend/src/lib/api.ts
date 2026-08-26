@@ -6,6 +6,7 @@ import type {
   Image,
   UploadBatch,
   MatchResult,
+  MatchResponse,
   Workspace,
   Team,
   Member,
@@ -75,6 +76,20 @@ interface BackendWorkspace {
   status: boolean
   createdAt: string
   updatedAt?: string
+}
+
+interface BackendMatchResult {
+  identity: {
+    id: string
+    name: string
+    description?: string | null
+  } | null
+  similarity: number
+}
+
+interface BackendMatchResponse {
+  query: MatchResponse['query']
+  matches: BackendMatchResult[]
 }
 
 const BASE = '/api'
@@ -233,10 +248,21 @@ export const api = {
     sseUrl: (id: string) => `${BASE}/uploads/batches/${id}/progress`,
   },
   faces: {
-    match: (file: File) => {
+    match: async (file: File): Promise<MatchResponse> => {
       const form = new FormData()
       form.append('file', file)
-      return request<MatchResult[]>('/faces/match', { method: 'POST', body: form })
+      const result = await request<BackendMatchResponse>('/faces/match', { method: 'POST', body: form })
+      return {
+        query: result.query,
+        matches: result.matches.flatMap((match): MatchResult[] => match.identity ? [{
+          identity: {
+            _id: match.identity.id,
+            name: match.identity.name,
+            description: match.identity.description ?? undefined,
+          },
+          similarity: match.similarity,
+        }] : []),
+      }
     },
     list: () => request<Face[]>('/faces'),
     get: (id: string) => request<Face>(`/faces/${id}`),

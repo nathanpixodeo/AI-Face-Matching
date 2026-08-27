@@ -1,4 +1,15 @@
 services:
+  landing:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.landing
+      args:
+        VITE_SITE_URL: ${LANDING_SITE_URL:-https://facematch.example.com}
+        VITE_APP_URL: ${APP_URL:-https://app.example.com}
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
   api:
     build:
       context: ..

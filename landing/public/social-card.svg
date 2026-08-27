@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#0d1714"/>
+  <path d="M0 84H1200M0 168H1200M0 252H1200M0 336H1200M0 420H1200M0 504H1200M120 0V630M240 0V630M360 0V630M480 0V630M600 0V630M720 0V630M840 0V630M960 0V630M1080 0V630" stroke="#F7F5ED" stroke-opacity=".07"/>
+  <circle cx="918" cy="278" r="238" stroke="#CBED3D" stroke-opacity=".34"/>
+  <circle cx="918" cy="278" r="184" stroke="#CBED3D" stroke-opacity=".2" stroke-dasharray="5 12"/>
+  <path d="M834 228c18-46 48-70 90-70 39 0 66 24 78 70M837 290c26 15 54 22 84 22 27 0 53-7 76-22M878 241h1M967 241h1M884 354c13-34 36-52 68-52 33 0 57 18 70 52" stroke="#F7F5ED" stroke-width="6" stroke-linecap="round"/>
+  <path d="M76 116V64h52M1072 64h52v52M1124 514v52h-52M128 566H76v-52" stroke="#CBED3D" stroke-width="8"/>
+  <text x="76" y="246" fill="#CBED3D" font-family="monospace" font-size="18" letter-spacing="4">FACEMATCH / IDENTITY OPERATIONS</text>
+  <text x="76" y="343" fill="#F7F5ED" font-family="Georgia,serif" font-size="74" font-weight="bold">Match the moment.</text>
+  <text x="76" y="423" fill="#CBED3D" font-family="Georgia,serif" font-size="74" font-style="italic">Keep the judgment.</text>
+  <text x="80" y="526" fill="#B7C5BD" font-family="Arial,sans-serif" font-size="23">Face matching and review for consent-led teams.</text>
+</svg>

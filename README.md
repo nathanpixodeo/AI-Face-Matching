@@ -6,9 +6,9 @@ Face recognition API with AdaFace ML, team-based multi-tenancy, identity managem
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ app.example.com              admin.example.com               │
-│ Customer React SPA           Admin React/Vite SPA             │
-│ Team-scoped workspace        Separate build + auth storage    │
+│ facematch.example.com · public marketing landing              │
+│ app.example.com       · customer React SPA / team workspace   │
+│ admin.example.com     · separate platform administrator SPA   │
 └─────────────────────────┬─────────────────┬─────────────────┘
                           │ REST (JWT Bearer)│
 ┌─────────────────────────┼───────────────────────────────────┐
@@ -65,6 +65,8 @@ docker compose up -d
 ```
 
 Services:
+
+- Marketing landing: http://localhost:3000
 - Admin frontend: http://localhost:3001
 - API: http://localhost:4001
 - Swagger Docs: http://localhost:4001/docs
@@ -174,6 +176,7 @@ No route, controller, or API-client rewrite is required for a new language.
 ## Scripts
 
 ### Backend
+
 ```bash
 npm run dev          # Start dev server with hot reload (tsx watch)
 npm run build        # Compile TypeScript → dist/
@@ -217,7 +220,23 @@ https://admin.example.com     → admin frontend (:3001 on the host)
 
 The tag deployment workflow publishes the admin image, deploys it on loopback port `3001`, and pulls it along with the API/ML images. Install the public Nginx template once on the host and point `admin.example.com` DNS to that host.
 
+## Marketing Landing
+
+The public landing application lives in `landing/` and is intentionally separate from both authenticated applications. It is the canonical entry point for ads and organic traffic; it never depends on a workspace session.
+
+```
+https://facematch.example.com  → landing container (:3000 on the host)
+https://app.example.com        → customer workspace
+https://admin.example.com      → platform administration
+```
+
+- Set repository variables `LANDING_SITE_URL` (the canonical public origin) and `APP_URL` (the existing customer-app origin) before tagging a production release. They are compiled into canonical, Open Graph, social-card, sitemap, and CTA URLs.
+- Landing CTAs forward `utm_*` and `ref` campaign parameters to the customer-app route, so advertising attribution is retained without adding a tracker to the public site.
+- The `landing` build emits `robots.txt`, `sitemap.xml`, semantic metadata, and `WebApplication` JSON-LD. Use [docker/nginx/facematch.example.com.conf](docker/nginx/facematch.example.com.conf) after replacing the example hostname with the real TLS virtual host.
+- The release workflow publishes `ghcr.io/<owner>/<repo>/landing`, binds it to loopback port `3000`, and deploys it alongside the existing API, ML, and admin images.
+
 ### Frontend
+
 ```bash
 npm run dev          # Vite dev server (:5173, proxies /api → :4001)
 npm run build        # tsc -b + vite build → dist/
@@ -228,12 +247,24 @@ npm run test:e2e     # Playwright E2E tests (auth + upload flows)
 ```
 
 ### Admin Frontend
+
 ```bash
 cd admin-frontend
 npm run dev          # Vite dev server (:5176, proxies /api → :4001)
 npm run build        # tsc -b + vite build → dist/
 npm run lint         # ESLint check
 npm run typecheck    # TypeScript type check
+```
+
+### Marketing Landing
+
+```bash
+cd landing
+npm install
+npm run dev          # http://localhost:5173
+npm run lint
+npm run typecheck
+npm run build        # production assets, robots.txt, and sitemap.xml
 ```
 
 ## Project Structure
@@ -266,8 +297,13 @@ ai-face-matching/
 │   ├── src/pages/          # Login + platform overview/team/user controls
 │   └── src/lib/api.ts      # Only auth + platform API client
 │
+├── landing/                # Public React/Vite marketing and SEO application
+│   ├── src/                # Responsive conversion-focused page
+│   ├── public/             # Favicon, social card, and web manifest
+│   └── scripts/            # Sitemap / robots artifact generation
+│
 ├── ml-service/             # Python FastAPI ML microservice
-├── docker/                 # Dockerfiles + docker-compose (5 services)
+├── docker/                 # Dockerfiles + docker-compose (6 services)
 ├── docs/                   # System documentation, FE spec, architecture
 └── .github/workflows/      # CI pipeline (lint → typecheck → test → build)
 ```
@@ -298,6 +334,8 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 | `backend-test` | Jest (38 tests) | ✓ |
 | `frontend-lint-typecheck` | ESLint + tsc -b | ✓ |
 | `frontend-build` | Vite build | ✓ |
+| `landing-lint-typecheck` | ESLint + tsc -b | ✓ |
+| `landing-build` | Vite build + crawl artifacts | ✓ |
 | `admin-frontend-lint-typecheck` | ESLint + tsc -b | ✓ |
 | `admin-frontend-build` | Vite build | ✓ |
 | `python-test` | Ruff + pytest | ✓ |
